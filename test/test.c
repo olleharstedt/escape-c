@@ -7,6 +7,7 @@
 #include "php.h"
 #include "ext/standard/info.h"
 #include "php_test.h"
+#include "zend_API.h"
 
 /* For compatibility with older PHP versions */
 #ifndef ZEND_PARSE_PARAMETERS_NONE
@@ -127,9 +128,20 @@ int main() {
     EG(current_execute_data) = &d;
     zval ret = {};
     //zif_test_test2(&d, &ret);
+	zval fn_name;
+    ZVAL_STRING(&fn_name, "test_test2");
 
     // From zend_API.h
-    //zend_call_function();
+    /*
+    call_user_function(
+        EG(function_table),
+        NULL,
+        &fn_name,
+        &ret,
+        0,
+        NULL
+    );
+    */
     //ZEND_API int zend_call_function(zend_fcall_info *fci, zend_fcall_info_cache *fci_cache);
     return 1;
 }

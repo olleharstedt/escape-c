@@ -208,7 +208,8 @@ olle:
 		-I/home/olle/kod/escape-c/php-src\
 		-I/home/olle/kod/escape-c/php-src/main\
 		-I/home/olle/kod/escape-c/php-src/Zend\
-		$(find ../php-src/ | grep '\.o$' | grep -v libs | grep -v php_cli | grep -v cgi_main | grep -v phpdbg)\
+		-I/home/olle/kod/escape-c/php-src/TSRM\
+		$(find /home/olle/kod/escape-c/php-src/ | grep '\.o$' | grep -v libs | grep -v php_cli | grep -v cgi_main | grep -v phpdbg)\
 		-g\
-		-O2 test.c\
+		test.c\
 		-lm -ldl -lxml2 -lsqlite3 -lresolv -lrt
