@@ -101,10 +101,36 @@ zend_module_entry test_module_entry = {
 };
 /* }}} */
 
-int main() {
-    /**
+
+/**
+ * Compile with:
       cc -I. -I/home/olle/kod/escape-c/test -DPHP_ATOM_INC -I/home/olle/kod/escape-c/test/include -I/home/olle/kod/escape-c/test/main -I/home/olle/kod/escape-c/test -I/usr/include/php/20170718 -I/usr/include/php/20170718/main -I/usr/include/php/20170718/TSRM -I/usr/include/php/20170718/Zend -I/usr/include/php/20170718/ext -I/usr/include/php/20170718/ext/date/lib  $(find ../php-src/ | grep '\.o$' | grep -v libs | grep -v php_cli | grep -v cgi_main | grep -v phpdbg) -g -O2 test.c -lm -ldl -lxml2 -lsqlite3 -lresolv -g -O2 -lrt
-     */
+  *
+  * @see https://stackoverflow.com/questions/3614758/is-it-possible-to-invoke-php-function-from-within-the-extension
+  */
+int main() {
+    /*
+       struct _zend_execute_data {
+           const zend_op       *opline;           // executed opline                
+           zend_execute_data   *call;             // current call                   
+           zval                *return_value;
+           zend_function       *func;             // executed function              
+           zval                 This;             // this + call_info + num_args    
+           zend_execute_data   *prev_execute_data;
+           zend_array          *symbol_table;
+           void               **run_time_cache;   // cache op_array->run_time_cache 
+       };
+   */
+    zend_execute_data d;
+
+    memset(&d, 0, sizeof(zend_execute_data));
+    EG(current_execute_data) = &d;
+    zval ret = {};
+    //zif_test_test2(&d, &ret);
+
+    // From zend_API.h
+    //zend_call_function();
+    //ZEND_API int zend_call_function(zend_fcall_info *fci, zend_fcall_info_cache *fci_cache);
     return 1;
 }
 

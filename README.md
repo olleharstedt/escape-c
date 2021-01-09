@@ -30,7 +30,7 @@ Example code:
 
 ```
 // Struct
-type user = {
-    id: int
-}
+struct user = {
+    id: int;
+};
 ```
