@@ -19,6 +19,13 @@ Features:
 * Structs
 * Variables
 * Functions
+* All arguments to functions are passed by reference (except int/float)
+* Destructors?
+* Constructor? Everything needs a default value (Rust).
+* Exceptions? Result struct, new for each value (without generics/malloc)?
+* Null?
+* Mutability?
+* Optional arguments? Only with NULL? Needs flow-sensitive typing or option type (can't without malloc/GC)
 
 Keep track on stack size with getrlimit? And fallback to malloc if too big? Runtime overhead.
 
@@ -33,4 +40,85 @@ Example code:
 struct user = {
     id: int;
 };
+
+class MyClass {
+    constructor() {
+    }
+    destructor() {
+    }
+}
+```
+
+---
+
+http://zetcode.com/db/mysqlc/
+
+* Can you do this without (explicit) malloc?
+
+    // Can never create a pointer variable like this.
+    MYSQL_RES *result = mysql_store_result(con);
+    // ... Do stuff
+    mysql_free_result(result);
+
+* Have pointer types only in lib code? And put free() in destructor/when it's out of scope.
+ 
+```
+#include <mysql.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+void finish_with_error(MYSQL *con)
+{
+  fprintf(stderr, "%s\n", mysql_error(con));
+  mysql_close(con);
+  exit(1);
+}
+
+int main(int argc, char **argv)
+{
+  MYSQL *con = mysql_init(NULL);
+
+  if (con == NULL)
+  {
+      fprintf(stderr, "mysql_init() failed\n");
+      exit(1);
+  }
+
+  if (mysql_real_connect(con, "localhost", "user12", "34klq*",
+          "testdb", 0, NULL, 0) == NULL)
+  {
+      finish_with_error(con);
+  }
+
+  if (mysql_query(con, "SELECT * FROM cars"))
+  {
+      finish_with_error(con);
+  }
+
+  MYSQL_RES *result = mysql_store_result(con);
+
+  if (result == NULL)
+  {
+      finish_with_error(con);
+  }
+
+  int num_fields = mysql_num_fields(result);
+
+  MYSQL_ROW row;
+
+  while ((row = mysql_fetch_row(result)))
+  {
+      for(int i = 0; i < num_fields; i++)
+      {
+          printf("%s ", row[i] ? row[i] : "NULL");
+      }
+
+      printf("\n");
+  }
+
+  mysql_free_result(result);
+  mysql_close(con);
+
+  exit(0);
+}
 ```
