@@ -19,13 +19,13 @@ Features:
 * Structs
 * Variables
 * Functions
-* All arguments to functions are passed by reference (except int/float)
 * Destructors?
 * Constructor? Everything needs a default value (Rust).
 * Exceptions? Result struct, new for each value (without generics/malloc)?
 * Null?
 * Mutability?
 * Optional arguments? Only with NULL? Needs flow-sensitive typing or option type (can't without malloc/GC)
+* Interfaces with structural typing?
 
 Keep track on stack size with getrlimit? And fallback to malloc if too big? Runtime overhead.
 
@@ -70,15 +70,20 @@ struct Rectangle {
     bottom_corner: Point;
 }
 
-function new_rectangle(&val Point p1, ref Point p2): val Rectangle {
+function new_rectangle(val Point p1, ref Point p2): Rectangle {
     // What should happen here?
     // How to differ between val Recangle and ref Rectangle here?
     return Rectangle {
-        p1, p2
+        p1,
+        p2  // Won't work, have to clone, or "collapse" to value type?
     };
 }
 
-function main(): val int {
+function main(): int {
+    p = Point {10, 20};      // Stack allocated
+    q = ref Point {20, 30};  // Heap allocated, GC
+    t = p.x + q.y;
+    return t;
 }
 ```
 
