@@ -93,10 +93,18 @@ http://zetcode.com/db/mysqlc/
 
 * Can you do this without (explicit) malloc?
 
-    // Can never create a pointer variable like this.
+    // Can never create a pointer variable like this. Wrap in struct? Forbid malloc use?
     MYSQL_RES *result = mysql_store_result(con);
     // ... Do stuff
     mysql_free_result(result);
+
+    struct MysqlRes = {
+    }
+
+    // MYSQL *con = mysql_init(NULL);
+    con = mysql_init();
+    con = ref mysql_init();  // Not allowed, should never be boxed. Or? If you want it to escape?
+    mysql_close(con);  // What if con is boxed here? mysql_close() only accepts val MYSQL?
 
 * Have pointer types only in lib code? And put free() in destructor/when it's out of scope.
  
