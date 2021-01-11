@@ -31,6 +31,16 @@ Keep track on stack size with getrlimit? And fallback to malloc if too big? Runt
 
 Can use Rust instead, without malloc?
 
+Three layout kinds?
+
+* val - value types allocated on the stack with a fixed lifetime
+* [&val - reference to a value type, constrained (only as function arguments to avoid copying?)]
+* ref - reference to heap allocated boxed value, garbage collected
+
+BUT: How to differ between value types that can be referenced, and those that cannot? Do we care?
+
+ref types can only compose of other ref types. val types can only compose other val types.
+
 ---
 
 Example code:
@@ -46,6 +56,29 @@ class MyClass {
     }
     destructor() {
     }
+}
+```
+
+```
+struct Point {
+    x: int;
+    y: int;
+};
+
+struct Rectangle {
+    top_corner: Point;
+    bottom_corner: Point;
+}
+
+function new_rectangle(&val Point p1, ref Point p2): val Rectangle {
+    // What should happen here?
+    // How to differ between val Recangle and ref Rectangle here?
+    return Rectangle {
+        p1, p2
+    };
+}
+
+function main(): val int {
 }
 ```
 
