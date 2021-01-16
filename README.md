@@ -40,12 +40,22 @@ Rust `no_std`: https://rust-embedded.github.io/book/intro/no-std.html
 Three layout kinds?
 
 * val - value types allocated on the stack with a fixed lifetime
-* [&val - reference to a value type, constrained (only as function arguments to avoid copying?)]
+* [&val - reference to a value type, constrained (only as function arguments to avoid copying? non-aliasing, cannot be used in arrays, collections, etc)]
 * ref - reference to heap allocated boxed value, garbage collected
 
 BUT: How to differ between value types that can be referenced, and those that cannot? Do we care?
 
 ref types can only compose of other ref types. val types can only compose other val types.
+
+Arrays are pointers in C, cannot return from a function if stack allocated. But can pass around.
+
+```
+function array_test() {
+    local points = Point[10];
+    let points_with_gc = Point[10];
+    return points;  // Invalid because it's an array (or wrap in struct automatically?)
+}
+```
 
 ---
 
