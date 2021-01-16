@@ -1,0 +1,29 @@
+/**
+ * How escape-c should look.
+ */
+
+struct Body {
+    double position[3];
+    double velocity[3];
+    double mass;
+};
+
+double pi = 3.1415;
+double solar_mass = 4.0 * pi * pi;
+double days_per_year 365.24;
+double bodies_count = 5;
+double interactions_count = bodies_count * (bodies_count - 1) / 2;
+double rounded_interactions_count = interactions_count + interactions_count % 2;
+
+Body[5] solar_bodies = [
+    Body {
+        position = [0, 0, 0];
+        velocity = [0, 0, 0];
+        mass = solar_mass;
+    }
+];
+
+void advance(&Body[] bodies) {
+    double[3][5] position_deltas[3][rounded_interactions_count];
+    double[3][5] magnitudes
+}

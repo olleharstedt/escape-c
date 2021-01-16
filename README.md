@@ -19,6 +19,7 @@ Features:
 * Structs
 * Variables
 * Functions
+* All arguments to functions are passed by reference (except int/float)?
 * Destructors?
 * Constructor? Everything needs a default value (Rust).
 * Exceptions? Result struct, new for each value (without generics/malloc)?
@@ -26,10 +27,15 @@ Features:
 * Mutability?
 * Optional arguments? Only with NULL? Needs flow-sensitive typing or option type (can't without malloc/GC)
 * Interfaces with structural typing?
+* Memory pools from static buffers = malloc BUT can't use without pointers
 
 Keep track on stack size with getrlimit? And fallback to malloc if too big? Runtime overhead.
 
+---
+
 Can use Rust instead, without malloc?
+ 
+Rust `no_std`: https://rust-embedded.github.io/book/intro/no-std.html
 
 Three layout kinds?
 
