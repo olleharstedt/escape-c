@@ -27,6 +27,14 @@ void advance(&Body[5] bodies)
 {
     local double[3][5] position_deltas[3][rounded_interactions_count];
     local double[3][5] magnitudes;
+
+    for(local i=0, k=0; i<BODIES_COUNT-1; ++i) {
+        for(local j=i+1; j<BODIES_COUNT; ++j, ++k) {
+            for(local m=0; m<3; ++m) {
+                position_Deltas[m][k] = bodies[i].position[m]-bodies[j].position[m];
+            }
+        }
+    }
 }
 
 void offset_momentum(&Body[5] bodies)

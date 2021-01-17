@@ -68,9 +68,9 @@ void offset_momentum(&Body[5] bodies) {
     py = py + bodies[i].vy * bodies[i].mass;
     pz = pz + bodies[i].vz * bodies[i].mass;
   done;
-  bodies.(0).vx <- -. px /. solar_mass;
-  bodies.(0).vy <- -. py /. solar_mass;
-  bodies.(0).vz <- -. pz /. solar_mass
+  bodies[0].vx = -px /. solar_mass;
+  bodies[0].vy = -py /. solar_mass;
+  bodies[0].vz = -pz /. solar_mass;
 }
 
 let jupiter = { x = 4.84143144246472090e+00;
