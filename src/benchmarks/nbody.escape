@@ -8,7 +8,7 @@ struct Body {
     double mass;
 };
 
-local pi = 3.1415;
+local pi = 3.141592653589793;
 local solar_mass = 4.0 * pi * pi;
 local days_per_year 365.24;
 local bodies_count = 5.0;
@@ -26,14 +26,14 @@ local solar_bodies = [
 void advance(&Body[5] bodies)
 {
     local double[3][5] position_deltas[3][rounded_interactions_count];
-    local double[3][5] magnitudes
+    local double[3][5] magnitudes;
 }
 
 void offset_momentum(&Body[5] bodies)
 {
-    for(local i = 0; i < 5; ++i) {
-        for(local m = 0; m < 3; ++m) {
-            bodies[0].velocity[m]-= bodies[i].velocity[m] * bodies[i].mass / SOLAR_MASS;
+    for (local i = 0; i < 5; i = i + 1) {
+        for (local m = 0; m < 3; m = m + 1) {
+            bodies[0].velocity[m] -= bodies[i].velocity[m] * bodies[i].mass / SOLAR_MASS;
         }
     }
 }
