@@ -23,16 +23,16 @@ void advance(&Body[5] bodies, double dt) {
       local dx = b.x -. b'.x;
       local dy = b.y -. b'.y;
       local dz = b.z -. b'.z;
-      local dist2 = dx *. dx +. dy *. dy +. dz *. dz;
-      local mag = dt /. (dist2 *. sqrt(dist2));
+      local dist2 = dx * dx + dy * dy + dz * dz;
+      local mag = dt / (dist2 * sqrt(dist2));
 
-      b.vx = b.vx -. dx *. b'.mass *. mag;
-      b.vy = b.vy -. dy *. b'.mass *. mag;
-      b.vz = b.vz -. dz *. b'.mass *. mag;
+      b.vx = b.vx -. dx * b'.mass * mag;
+      b.vy = b.vy -. dy * b'.mass * mag;
+      b.vz = b.vz -. dz * b'.mass * mag;
 
-      b'.vx = b'.vx +. dx *. b.mass *. mag;
-      b'.vy = b'.vy +. dy *. b.mass *. mag;
-      b'.vz = b'.vz +. dz *. b.mass *. mag;
+      b'.vx = b'.vx + dx * b.mass * mag;
+      b'.vy = b'.vy + dy * b.mass * mag;
+      b'.vz = b'.vz + dz * b.mass * mag;
     done
   done;
   for i = 0 to n do
@@ -64,9 +64,9 @@ void offset_momentum(&Body[5] bodies) {
   local py = 0;
   local pz = 0;
   for i = 0 to Array.length bodies - 1 do
-    px := px +. bodies.(i).vx *. bodies.(i).mass;
-    py := py +. bodies.(i).vy *. bodies.(i).mass;
-    pz := pz +. bodies.(i).vz *. bodies.(i).mass;
+    px = px + bodies[i].vx * bodies[i].mass;
+    py = py + bodies[i].vy * bodies[i].mass;
+    pz = pz + bodies[i].vz * bodies[i].mass;
   done;
   bodies.(0).vx <- -. px /. solar_mass;
   bodies.(0).vy <- -. py /. solar_mass;
