@@ -3,19 +3,19 @@
  */
 
 struct Body {
-    double position[3];
-    double velocity[3];
+    double[3] position;
+    double[3] velocity;
     double mass;
 };
 
-double pi = 3.1415;
-double solar_mass = 4.0 * pi * pi;
-double days_per_year 365.24;
-double bodies_count = 5;
-double interactions_count = bodies_count * (bodies_count - 1) / 2;
-double rounded_interactions_count = interactions_count + interactions_count % 2;
+local pi = 3.1415;
+local solar_mass = 4.0 * pi * pi;
+local days_per_year 365.24;
+local bodies_count = 5.0;
+local interactions_count = bodies_count * (bodies_count - 1.0) / 2.0;
+local rounded_interactions_count = interactions_count + interactions_count % 2.0;
 
-Body[5] solar_bodies = [
+local solar_bodies = [
     Body {
         position = [0, 0, 0];
         velocity = [0, 0, 0];
@@ -23,7 +23,18 @@ Body[5] solar_bodies = [
     }
 ];
 
-void advance(&Body[] bodies) {
-    double[3][5] position_deltas[3][rounded_interactions_count];
-    double[3][5] magnitudes
+void advance(&Body[5] bodies)
+{
+    local double[3][5] position_deltas[3][rounded_interactions_count];
+    local double[3][5] magnitudes
 }
+
+void offset_momentum(&Body[5] bodies)
+{
+    for(local i = 0; i < 5; ++i) {
+        for(local m = 0; m < 3; ++m) {
+            bodies[0].velocity[m]-= bodies[i].velocity[m] * bodies[i].mass / SOLAR_MASS;
+        }
+    }
+}
+
