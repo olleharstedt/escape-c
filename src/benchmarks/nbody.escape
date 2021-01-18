@@ -23,9 +23,9 @@ local solar_bodies = [
     }
 ];
 
-void advance(&Body[5] bodies)
+void advance(&Body[] bodies)
 {
-    local double[3][5] position_deltas[3][rounded_interactions_count];
+    local double[3][5] position_deltas;
     local double[3][5] magnitudes;
 
     for(local i=0, k=0; i<BODIES_COUNT-1; ++i) {
@@ -37,7 +37,7 @@ void advance(&Body[5] bodies)
     }
 }
 
-void offset_momentum(&Body[5] bodies)
+void offset_momentum(&Body[] bodies)
 {
     for (local i = 0; i < 5; i = i + 1) {
         for (local m = 0; m < 3; m = m + 1) {
