@@ -6,6 +6,7 @@
  *  :syn keyword cStatement local let
  */
 
+// TODO: Do `local pi = ...` or `local double pi = ...` or `local pi: double = ...`?
 local pi = 3.141592653589793
 local solar_mass = 4 * pi * pi
 local days_per_year = 365.24
@@ -21,6 +22,7 @@ struct Body {
   double mass;
 };
 
+// TODO: Allow alias of body if it doesn't escape.
 local bodies = [
   // Sun
   {
@@ -75,13 +77,13 @@ local bodies = [
 ];
 
 /**
- * @param bodies
- * @param dt
+ * @param &Body[] bodies
+ * @param double dt
  * @return void
  */
 void advance(&Body[] bodies, double dt) {
   local n = bodies_count - 1;
-  for (local i = 0; i < bodies_count - 1; i+= 1) {
+  for (local i = 0; i < bodies_count - 1; i += 1) {
     for (local j = i + 1; j < bodies_count - 1; j += 1) {
       local dx = bodies[i].x - bodies[j].x;
       local dy = bodies[i].y - bodies[j].y;
@@ -105,6 +107,10 @@ void advance(&Body[] bodies, double dt) {
   }
 }
 
+/**
+ * @param &Body[] bodies
+ * @return double
+ */
 double energy(&Body[] bodies) {
   local e = 0;
   for (local i = 0; i < bodies_count - 1; i += 1) {
@@ -120,6 +126,10 @@ double energy(&Body[] bodies) {
   return e;
 }
 
+/**
+ * @param &Body[] bodies
+ * @return void
+ */
 void offset_momentum(&Body[] bodies) {
   local px = 0;
   local py = 0;
