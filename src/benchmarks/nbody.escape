@@ -1,5 +1,9 @@
 /**
  * How escape-c should look.
+ *
+ * Vim config:
+ *  :set filetype=c
+ *  :syn keyword cStatement local let
  */
 
 struct Body {
@@ -23,18 +27,83 @@ local solar_bodies = [
     }
 ];
 
+/**
+ * \param bodies Borrowed array of Body elements
+ */
 void advance(&Body[] bodies)
 {
-    local double[3][5] position_deltas;
-    local double[3][5] magnitudes;
+    local double[3][5] position_deltas = {};
+    local double[3][5] magnitudes = {};
 
-    for(local i=0, k=0; i<BODIES_COUNT-1; ++i) {
-        for(local j=i+1; j<BODIES_COUNT; ++j, ++k) {
-            for(local m=0; m<3; ++m) {
-                position_Deltas[m][k] = bodies[i].position[m]-bodies[j].position[m];
+    for (local i = 0; i < bodies_count - 1; i += 1) {
+        local k = 0;
+        for (local j = i + 1; j < bodies_count; j += 1) {
+            for (local m = 0; m < 3; m += 1) {
+                position_deltas[m][k] = bodies[i].position[m] - bodies[j].position[m];
             }
         }
+        k += 1;
     }
+
+    for (local i = 0; i < rounded_interactions_count / 2; i += 1) {
+        // Load position_Deltas of two bodies into position_Delta.
+        local double[3] position_delta;
+        for (local m = 0; m < 3; m += 1) {
+            position_delta[m] = position_deltas[m][i];
+        }
+
+        local distance_squared =
+          position_delta[0] * position_delta[0] +
+          position_delta[1] * position_delta[1] +
+          position_delta[2] * position_delta[2];
+
+        // Doing square roots normally using double precision floating point
+        // math can be quite time consuming so SSE's much faster single
+        // precision reciprocal square root approximation instruction is used as
+        // a starting point instead. The precision isn't quite sufficient to get
+        // acceptable results so two iterations of the Newton–Raphson method are
+        // done to improve precision further.
+        __m128d distance_Reciprocal=
+          _mm_cvtps_pd(_mm_rsqrt_ps(_mm_cvtpd_ps(distance_Squared)));
+        for(intnative_t j=0; j<2; ++j)
+            // Normally the last four multiplications in this equation would
+            // have to be done sequentially but by placing the last
+            // multiplication in parentheses, a compiler can then schedule that
+            // multiplication earlier.
+            distance_Reciprocal=distance_Reciprocal*1.5-
+              0.5*distance_Squared*distance_Reciprocal*
+              (distance_Reciprocal*distance_Reciprocal);
+
+        // Calculate the magnitudes of force between the bodies. Typically this
+        // calculation would probably be done by using a division by the cube of
+        // the distance (or similarly a multiplication by the cube of its
+        // reciprocal) but for better performance on modern computers it often
+        // will make sense to do part of the calculation using a division by the
+        // distance_Squared which was already calculated earlier. Additionally
+        // this method is probably a little more accurate due to less rounding
+        // as well.
+        ((__m128d *)magnitudes)[i]=0.01/distance_Squared*distance_Reciprocal;
+    }
+
+    // Use the calculated magnitudes of force to update the velocities for all
+    // of the bodies.
+    for(intnative_t i=0, k=0; i<BODIES_COUNT-1; ++i)
+        for(intnative_t j=i+1; j<BODIES_COUNT; ++j, ++k){
+            // Precompute the products of the mass and magnitude since it can be
+            // reused a couple times.
+            const double
+              i_mass_magnitude=bodies[i].mass*magnitudes[k],
+              j_mass_magnitude=bodies[j].mass*magnitudes[k];
+            for(intnative_t m=0; m<3; ++m){
+                bodies[i].velocity[m]-=position_Deltas[m][k]*j_mass_magnitude;
+                bodies[j].velocity[m]+=position_Deltas[m][k]*i_mass_magnitude;
+            }
+        }
+
+    // Use the updated velocities to update the positions for all of the bodies.
+    for(intnative_t i=0; i<BODIES_COUNT; ++i)
+        for(intnative_t m=0; m<3; ++m)
+            bodies[i].position[m]+=0.01*bodies[i].velocity[m];
 }
 
 void offset_momentum(&Body[] bodies)
