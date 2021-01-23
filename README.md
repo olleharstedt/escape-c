@@ -31,9 +31,11 @@ Features:
 
 Keep track on stack size with getrlimit? And fallback to malloc if too big? Runtime overhead.
 
+If refs can be null, flow-sensitive checking must be done.
+
 ---
 
-Can use Rust instead, without malloc?
+Can use Rust instead, without malloc? Rc or Arc without lifetime annotations?
  
 Rust `no_std`: https://rust-embedded.github.io/book/intro/no-std.html
 
@@ -101,6 +103,13 @@ function main(): int {
     t = p.x + q.y;
     return t;
 }
+```
+
+```
+struct tree_node {
+   ref tree_node left_Node;
+   ref tree_node right_Node;
+} tree_node;
 ```
 
 ---
