@@ -1,0 +1,45 @@
+/**
+ * How escape-c should look.
+ *
+ * Vim config:
+ *  :set filetype=c
+ *  :syn keyword cStatement local let
+ *  :syn keyword cStructure ref
+ */
+
+struct tree_node{
+   ref tree_node left_node;
+   ref tree_node right_node;
+} tree_node;
+
+ref tree_node make(int d) {
+    if (d == 0) {
+        return new tree_node {
+            null,
+            null
+        };
+    } else {
+        return new tree_node {
+            make(d - 1),
+            make(d - 1)
+        }
+    }
+l
+
+int check(ref tree_node node) {
+    if (node == null) {
+        return 0;
+    } else {
+        return 1 + check(node.left_node) + check(node.right_node);
+    }
+}
+
+local min_depth = 4;
+local max_depth = 10;
+local stretch_depth = max_depth + 1;
+
+invoke() {
+}
+
+int main() {
+}
