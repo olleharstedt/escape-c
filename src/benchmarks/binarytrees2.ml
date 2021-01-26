@@ -20,7 +20,7 @@ let () =
 
 let long_lived_tree = make max_depth
 
-let rec loop_depths d =
+let loop_depths d =
   for i = 0 to  ((max_depth - d) / 2 + 1) - 1 do
     let d = d + i * 2 in
     let niter = 1 lsl (max_depth - d + min_depth) in
