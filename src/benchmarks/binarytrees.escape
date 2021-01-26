@@ -3,16 +3,19 @@
  *
  * Vim config:
  *  :set filetype=c
- *  :syn keyword cStatement local let
+ *  :syn keyword cStatement local let new
  *  :syn keyword cStructure ref
  */
 
-struct tree_node{
-   ref tree_node left_node;
-   ref tree_node right_node;
-} tree_node;
+// TODO: Generating C struct for both stack and GC allocation.
+struct tree_node {
+   tree_node left_node;
+   tree_node right_node;
+};
 
-ref tree_node make(int d) {
+// TODO: Must return ref type? How to now allocation type?
+// TODO: Not allowed to return pointer to stack allocation? Only if it doesn't escape?
+&tree_node make(int d) {
     if (d == 0) {
         return new tree_node {
             null,
@@ -26,10 +29,13 @@ ref tree_node make(int d) {
     }
 l
 
-int check(ref tree_node node) {
+// TODO: Can I make check() work on both stack and GC trees?
+// TODO: ref == must be GC; no ref == can be both stack and GC? (Still a pointer)
+int check(tree_node &node) {
     if (node == null) {
         return 0;
     } else {
+        // TODO: node.left_node implied pointer?
         return 1 + check(node.left_node) + check(node.right_node);
     }
 }
@@ -42,4 +48,6 @@ invoke() {
 }
 
 int main() {
+    local max_depth = 10;
+    let long_lived_tree = make(max_depth);
 }
