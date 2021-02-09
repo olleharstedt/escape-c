@@ -61,6 +61,12 @@ function array_test() {
 
 ---
 
+A struct in the code is compiled to both a native C struct (stack alloc) and an OCaml record (GC alloc).
+
+That means they can't point to each other? Better to have OCaml values for everything, making the C-code less readable.
+
+---
+
 Example code:
 
 ```
