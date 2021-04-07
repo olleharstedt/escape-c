@@ -21,15 +21,9 @@ Features:
 * Structs
 * Variables
 * Functions
-* All arguments to functions are passed by reference (except int/float)?
+* All arguments to functions are passed by reference (except int/float)
 * Destructors?
 * Constructor? Everything needs a default value (Rust).
-* Exceptions? Result struct, new for each value (without generics/malloc)?
-* Null?
-* Mutability?
-* Optional arguments? Only with NULL? Needs flow-sensitive typing or option type (can't without malloc/GC)
-* Interfaces with structural typing?
-* Memory pools from static buffers = malloc BUT can't use without pointers
 
 Keep track on stack size with getrlimit? And fallback to malloc if too big? Runtime overhead.
 
@@ -59,6 +53,8 @@ let s = new Point {6, 7};       // GC, can escape scope
 ```
 
 TODO: Interaction between different memories?
+
+TODO: How to compile to C?
 
 ---
 
@@ -226,3 +222,9 @@ int main(int argc, char **argv)
   exit(0);
 }
 ```
+
+## Resources
+
+Example compiler
+
+https://github.com/SOwens/example-compiler
