@@ -1,16 +1,18 @@
 Toy language
 
-* Only allow stack allocation with a fixed lifetime
-* Ensure memory does not escape using escape analysis
-* Integrate with PHP standard library
+* Opt out of GC with non-escaping stack allocation
+* Ensure variables do not escape using escape analysis
+* Compiles to C
 
 ---
 
 Tools:
 
 * OCaml + Menhir
+* Dune
 * Compile to C
-* Integrate with PHP standard library
+* Uses OCaml GC for blocked values
+* Uses pure C struct for non-escaping values
 
 ---
 
@@ -32,6 +34,31 @@ Features:
 Keep track on stack size with getrlimit? And fallback to malloc if too big? Runtime overhead.
 
 If refs can be null, flow-sensitive checking must be done.
+
+---
+
+Three memory strategies:
+
+* Stack allocation (no value types, only references)
+* Regions
+* Reference count
+
+For three scenarios:
+
+* Stack when you know both size and scope (lifetime), or scope and clear upper bound (like max 3 bullet sprites on screen)
+* Region when you know scope but not size
+* GC when you don't know scope nor size
+
+Also global variables for known size but no known scope?
+
+```
+local p = new Point {1, 2};     // Stack alloc, cannot escape
+r = new Region;
+let q = new Point {3, 4} in r;  // Region alloc, cannot escape region scope
+let s = new Point {6, 7};       // GC, can escape scope
+```
+
+TODO: Interaction between different memories?
 
 ---
 
