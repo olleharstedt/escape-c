@@ -136,7 +136,7 @@ let declaration_to_c (d : declaration) : string = match d with
         struct_to_c name fields
 
 let program_to_c (p : program) : string = match p with
-   | Declaration_list decls -> List.fold_left (fun carry decl -> declaration_to_c decl) "" decls
+   | Declaration_list decls -> List.fold_left (fun carry decl -> carry ^ declaration_to_c decl) "" decls
 
 (**
  * Compile with:
