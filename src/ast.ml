@@ -112,10 +112,11 @@ let statement_to_c (s : statement) : string = match s with
     (*| _ -> failwith "Not implemented"*)
 
 let struct_field_to_c (field : struct_field) : string = match field with
-    | (name, typ) -> typ_to_c typ ^ " " ^ name ^ ",\n"
+    | (name, typ) -> typ_to_c typ ^ " " ^ name ^ ";\n"
 
 let struct_fields_to_c (fields : struct_field list) : string =
-    List.fold_left (fun carry struct_field -> carry ^ struct_field_to_c struct_field) "" fields
+    let s = List.fold_left (fun carry struct_field -> carry ^ struct_field_to_c struct_field) "" fields in
+    String.sub s 0 (String.length s - 1)
 
 let struct_to_c (name: string) (fields : struct_field list) : string =
     "typedef struct __" ^ name ^ "{\n" ^
