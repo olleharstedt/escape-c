@@ -22,14 +22,20 @@ and param =
 
 and identifier = string
 
+and region_name = string
+
+(**
+ * TODO: Implement as kind 
+ * @see https://ocaml.org/api/Bigarray.html
+ *)
+and locality = Local | Region of region_name | Nonlocal
+
 and typ =
     | Int
-    | Struct_typ of struct_name
-
-and locality = Local | Nonlocal
+    | Struct_typ of locality * struct_name
 
 and statement =
-    | Assignment of typ * locality * identifier * expression
+    | Assignment of typ * identifier * expression
     | Return of expression
 
 and struct_init = (struct_field * expression) list
@@ -58,6 +64,11 @@ Point new_point() {
     return p;
 }
 
+Point new_points() {
+    local ps = [new Point {1, 2}, new Point {3, 4}];
+    return ps;
+}
+
 // C
 Point* new_point() {
     Point __p = {1, 2};
@@ -71,7 +82,7 @@ Point new_point() {
     return q;
 }
 
-void add_point(Point[] points) {
+void add_point(local Point[] points) {
     local p = new Point {1, 2};
     points[0] = p;
 }
@@ -94,7 +105,7 @@ Declaration_list [
 
 let typ_to_c (t : typ) : string = match t with
     | Int -> "int"
-    | Struct_typ t -> t
+    | Struct_typ (locality, t) -> t
 
 let new_to_c (struct_name : string) (struct_init : (struct_field * expression) list) : string = ""
 
@@ -103,13 +114,20 @@ let expression_to_c (e : expression) : string = match e with
     | Plus (_, _) -> failwith "Not implemented: Plus"
     | New (struct_name, struct_init) -> new_to_c struct_name struct_init
 
-let assignment_to_c (typ : typ) (locality : locality) (id : string) (expr : expression) : string =
+let assignment_to_c (typ : typ) (id : string) (expr : expression) : string =
     typ_to_c typ ^ " " ^ id ^ " = " ^ expression_to_c expr
+
+let new_stack_alloc (typ : typ) (id : string) : string = match typ with
+    | Struct_typ (Local, name) -> ""
 
 let statement_to_c (s : statement) : string = match s with
     | Return ex -> "return " ^ expression_to_c ex ^ ";\n"
-    | Assignment (typ, locality, id, expr) -> assignment_to_c typ locality id expr
-    (*| _ -> failwith "Not implemented"*)
+    | Assignment (typ, id, New (struct_name, struct_init)) -> match typ with
+        | Struct_typ (Local, _) ->
+            new_stack_alloc typ id ^
+            assignment_to_c typ id expr
+        | Int -> assignment_to_c typ id expr
+        | _ -> failwith "Not iplemented"
 
 let struct_field_to_c (field : struct_field) : string = match field with
     | (name, typ) -> typ_to_c typ ^ " " ^ name ^ ";\n"
@@ -172,8 +190,7 @@ let () =
                 [],
                 [
                     Assignment (
-                        Struct_typ "Point",
-                        Local,
+                        Struct_typ (Local, "Point"),
                         "p",
                         New (
                             "Point",

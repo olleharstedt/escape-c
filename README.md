@@ -18,12 +18,15 @@ Tools:
 
 Features:
 
+* Three locality kinds: stack local, region local, non-local (garbage collected)
 * Structs
 * Variables
 * Functions
-* All arguments to functions are passed by reference (except int/float)
-* Destructors?
-* Constructor? Everything needs a default value (Rust).
+* Pass-by-reference
+
+TODO: Generics? Array of types
+
+TODO: Alias graph with cyclic references (stack alloc)
 
 Keep track on stack size with getrlimit? And fallback to malloc if too big? Runtime overhead.
 
