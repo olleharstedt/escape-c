@@ -43,6 +43,7 @@ and struct_init = (struct_field * expression) list
 and expression =
     | Num of int
     | Plus of expression * expression
+    (* TODO: "new" needs locality? *)
     | New of struct_name * struct_init
 
 (*
