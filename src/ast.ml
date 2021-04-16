@@ -35,6 +35,7 @@ and typ =
     | Struct_typ of locality * struct_name
 
 and statement =
+    | Struct_alloc of typ * identifier * struct_init
     | Assignment of typ * identifier * expression
     | Return of expression
 
@@ -104,6 +105,33 @@ Declaration_list [
 ]
  *)
 
+let rec insert_stack_alloc_stmts (stmts : statement list) : statement list = match stmts with
+    | [] -> []
+    | Assignment (typ, id, expr)::tail ->
+        begin match expr with
+            | New (struct_name, struct_init) ->
+                   Struct_alloc (typ, id, struct_init)
+                :: Assignment (typ, id, expr)
+                :: insert_stack_alloc_stmts tail
+            | _ -> failwith "Unsupported assignment structure"
+        end
+    | s::tail ->
+        s :: insert_stack_alloc_stmts tail
+
+let insert_stack_alloc_decl (decl : declaration) : declaration = match decl with
+    | Function (name, params, stmts, t) ->
+        Function (name, params, insert_stack_alloc_stmts stmts, t)
+    | d -> d
+
+(**
+ * Find all "New" with locality "Local" and insert stack allocations on the line before.
+ *
+ * @param p program
+ * @return program
+ *)
+let insert_stack_alloc (p : program) : program = match p with
+   | Declaration_list decls -> Declaration_list (List.map (fun decl -> insert_stack_alloc_decl decl) decls)
+
 let typ_to_c (t : typ) : string = match t with
     | Int -> "int"
     | Struct_typ (locality, t) -> t
@@ -118,17 +146,20 @@ let expression_to_c (e : expression) : string = match e with
 let assignment_to_c (typ : typ) (id : string) (expr : expression) : string =
     typ_to_c typ ^ " " ^ id ^ " = " ^ expression_to_c expr
 
-let new_stack_alloc (typ : typ) (id : string) : string = match typ with
-    | Struct_typ (Local, name) -> ""
-
 let statement_to_c (s : statement) : string = match s with
     | Return ex -> "return " ^ expression_to_c ex ^ ";\n"
-    | Assignment (typ, id, New (struct_name, struct_init)) -> match typ with
-        | Struct_typ (Local, _) ->
-            new_stack_alloc typ id ^
-            assignment_to_c typ id expr
-        | Int -> assignment_to_c typ id expr
-        | _ -> failwith "Not iplemented"
+    | Struct_alloc (typ, identifier, struct_init) ->
+        begin match typ with
+            | Struct_typ (Local, name) -> "struct alloc\n"
+            | _ -> failwith "Invalid typ in Struct_alloc"
+        end
+    | Assignment (typ, id, expr) -> 
+        begin match typ with
+            | Struct_typ (Local, name) ->
+                assignment_to_c typ id expr
+            | Int -> assignment_to_c typ id expr
+            | _ -> failwith "Not iplemented"
+        end
 
 let struct_field_to_c (field : struct_field) : string = match field with
     | (name, typ) -> typ_to_c typ ^ " " ^ name ^ ";\n"
@@ -155,6 +186,12 @@ let declaration_to_c (d : declaration) : string = match d with
     | Struct (name, fields) ->
         struct_to_c name fields
 
+(**
+ * Loop the p AST and spit out C code as a string
+ *
+ * @param p program
+ * @return string
+ *)
 let program_to_c (p : program) : string = match p with
    | Declaration_list decls -> List.fold_left (fun carry decl -> carry ^ declaration_to_c decl) "" decls
 
@@ -206,4 +243,5 @@ let () =
                 Int
             )
         ] in
+    let test2 = insert_stack_alloc test2 in
     print_endline (program_to_c test2)
