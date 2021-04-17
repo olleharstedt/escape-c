@@ -2,50 +2,54 @@
  * AST for EscapeLang
  *)
 
-type program = 
-    | Declaration_list of declaration list
+module Ast = struct
+    type program = 
+        | Declaration_list of declaration list
 
-and declaration =
-    | Function of function_name * param list * statement list * typ
-    | Struct of struct_name * struct_field list
+    and declaration =
+        | Function of function_name * param list * statement list * typ
+        | Struct of struct_name * struct_field list
 
-and function_name = string
+    and function_name = string
 
-and struct_name = string
+    and struct_name = string
 
-and struct_field_name = string
+    and struct_field_name = string
 
-and struct_field = struct_field_name * typ
+    and struct_field = struct_field_name * typ
 
-and param =
-    | Param of identifier * typ
+    and param =
+        | Param of identifier * typ
 
-and identifier = string
+    and identifier = string
 
-and region_name = string
+    and region_name = string
 
-(**
- * TODO: Implement as kind 
- * @see https://ocaml.org/api/Bigarray.html
- *)
-and locality = Local | Region of region_name | Nonlocal
+    (**
+     * TODO: Implement as kind 
+     * @see https://ocaml.org/api/Bigarray.html
+     *)
+    and locality = Local | Region of region_name | Nonlocal
 
-and typ =
-    | Int
-    | Struct_typ of locality * struct_name
+    and typ =
+        | Int
+        | Struct_typ of locality * struct_name
 
-and statement =
-    | Struct_alloc of typ * identifier * struct_init
-    | Assignment of typ * identifier * expression
-    | Return of expression
+    and statement =
+        | Struct_alloc of typ * identifier * struct_init
+        | Assignment of typ * identifier * expression
+        | Return of expression
 
-and struct_init = (struct_field * expression) list
+    and struct_init = (struct_field * expression) list
 
-and expression =
-    | Num of int
-    | Plus of expression * expression
-    (* TODO: "new" needs locality? *)
-    | New of struct_name * struct_init
+    and expression =
+        | Num of int
+        | Plus of expression * expression
+        (* TODO: "new" needs locality? *)
+        | New of struct_name * struct_init
+end
+
+open Ast
 
 (*
 

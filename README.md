@@ -28,6 +28,8 @@ TODO: Generics? Array of types
 
 TODO: Alias graph with cyclic references (stack alloc)
 
+TODO: Least privilige when pass-by-reference? Leads to ownership.
+
 Keep track on stack size with getrlimit? And fallback to malloc if too big? Runtime overhead.
 
 If refs can be null, flow-sensitive checking must be done.
