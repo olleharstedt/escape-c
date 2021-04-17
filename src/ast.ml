@@ -163,7 +163,9 @@ module GenerateCPass : (PASS with type return_t = string) = struct
         | New (struct_name, struct_init) -> new_to_c struct_name struct_init
 
     let assignment_to_c (typ : typ) (id : string) (expr : expression) : string =
-        typ_to_c typ ^ " " ^ id ^ " = " ^ expression_to_c expr
+        ""
+        (* TODO: Logic happens in struct_alloc *)
+        (*typ_to_c typ ^ " " ^ id ^ " = " ^ expression_to_c expr*)
 
     let struct_init_to_c (init : struct_init) : string = 
         let s = List.fold_left (fun carry (field, expression) ->
@@ -183,6 +185,7 @@ module GenerateCPass : (PASS with type return_t = string) = struct
             begin match typ with
                 | Struct_typ (Local, struct_name) ->
                     sprintf "%s __%s = {%s};\n" struct_name identifier (struct_init_to_c struct_init)
+                    ^ sprintf "%s *%s = &__%s;\n" struct_name identifier identifier
                 | _ -> failwith "Invalid typ in Struct_alloc"
             end
         | Assignment (typ, id, expr) -> 
