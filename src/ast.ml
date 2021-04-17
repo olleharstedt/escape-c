@@ -2,6 +2,8 @@
  * AST for EscapeLang
  *)
 
+open Printf
+
 module Ast = struct
     type program = 
         | Declaration_list of declaration list
@@ -58,6 +60,7 @@ TODO: Escape via return
 TODO: Escape via alias
 TODO: Escape via array as in-argument
 TODO: Escape via ref in in-argument
+TODO: Use fold_lefti: let fold_lefti f acc xs = List.fold_left (fun (i, acc) x -> (i + 1, f i acc x)) (0, acc) xs`
 
 struct Point = {
     int x;
@@ -162,11 +165,24 @@ module GenerateCPass : (PASS with type return_t = string) = struct
     let assignment_to_c (typ : typ) (id : string) (expr : expression) : string =
         typ_to_c typ ^ " " ^ id ^ " = " ^ expression_to_c expr
 
+    let struct_init_to_c (init : struct_init) : string = 
+        let s = List.fold_left (fun carry (field, expression) ->
+            carry ^ begin match field, expression with
+                | (name, Int), Num n ->
+                    sprintf " .%s = %d" name n
+                | _, _ -> failwith "Unsupported struct init"
+            end
+            ^ ","
+        ) "" init
+        in
+        String.sub s 0 (String.length s - 1)
+
     let statement_to_c (s : statement) : string = match s with
         | Return ex -> "return " ^ expression_to_c ex ^ ";\n"
         | Struct_alloc (typ, identifier, struct_init) ->
             begin match typ with
-                | Struct_typ (Local, name) -> "struct alloc\n"
+                | Struct_typ (Local, struct_name) ->
+                    sprintf "%s __%s = {%s};\n" struct_name identifier (struct_init_to_c struct_init)
                 | _ -> failwith "Invalid typ in Struct_alloc"
             end
         | Assignment (typ, id, expr) -> 
@@ -215,7 +231,7 @@ end
 (**
  * Compile with:
  *   ocamlc ast.ml
- *   ./a.out | gcc -xc - -o test1
+ *   ./a.out | gcc -xc - -o test1 -std=c99
  *)
 let () =
     (*
@@ -260,5 +276,6 @@ let () =
                 Int
             )
         ] in
+    (* TODO: Escape analysis pass could happen before *)
     let test2 = StackAllocPass.run test2 in
     print_endline (GenerateCPass.run test2)
