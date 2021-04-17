@@ -109,9 +109,14 @@ Declaration_list [
 ]
  *)
 
-module StackAllocPass : sig
-    val insert_stack_alloc : program -> program
-end = struct
+module type PASS = sig
+    type return_t
+    val run : program -> return_t
+end
+
+module StackAllocPass : (PASS with type return_t = program) = struct
+    type return_t = program
+
     let rec insert_stack_alloc_stmts (stmts : statement list) : statement list = match stmts with
         | [] -> []
         | Assignment (typ, id, expr)::tail ->
@@ -136,11 +141,13 @@ end = struct
      * @param p program
      * @return program
      *)
-    let insert_stack_alloc (p : program) : program = match p with
+    let run (p : program) : program = match p with
        | Declaration_list decls -> Declaration_list (List.map (fun decl -> insert_stack_alloc_decl decl) decls)
 end
 
-module CGeneratePass = struct
+module GenerateCPass : (PASS with type return_t = string) = struct
+    type return_t = string
+
     let typ_to_c (t : typ) : string = match t with
         | Int -> "int"
         | Struct_typ (locality, t) -> t
@@ -201,7 +208,7 @@ module CGeneratePass = struct
      * @param p program
      * @return string
      *)
-    let program_to_c (p : program) : string = match p with
+    let run (p : program) : return_t = match p with
        | Declaration_list decls -> List.fold_left (fun carry decl -> carry ^ declaration_to_c decl) "" decls
 end
 
@@ -253,5 +260,5 @@ let () =
                 Int
             )
         ] in
-    let test2 = StackAllocPass.insert_stack_alloc test2 in
-    print_endline (CGeneratePass.program_to_c test2)
+    let test2 = StackAllocPass.run test2 in
+    print_endline (GenerateCPass.run test2)
