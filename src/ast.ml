@@ -31,7 +31,11 @@ module Ast = struct
      * TODO: Implement as kind 
      * @see https://ocaml.org/api/Bigarray.html
      *)
-    and locality = Local | Region of region_name | Nonlocal
+    and locality =
+        | Local
+        | Region of region_name
+        | Nonlocal
+        | Unknown (* First pass might have un-propagated locality allocations *)
 
     and typ =
         | Int
