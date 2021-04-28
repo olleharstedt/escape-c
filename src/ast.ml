@@ -8,8 +8,18 @@ module Ast = struct
     type program = 
         | Declaration_list of declaration list
 
+    (**
+     * TODO: Implement as kind 
+     * @see https://ocaml.org/api/Bigarray.html
+     *)
+    and locality =
+        | Local
+        | Region of region_name
+        | Nonlocal
+        | Unknown (* First pass might have un-propagated locality allocations; TODO: Use option? *)
+
     and param =
-        | Param of identifier * typ
+        | Param of locality * identifier * typ
 
     and declaration =
         | Function of function_name * param list * statement list * typ
@@ -26,16 +36,6 @@ module Ast = struct
     and identifier = string
 
     and region_name = string
-
-    (**
-     * TODO: Implement as kind 
-     * @see https://ocaml.org/api/Bigarray.html
-     *)
-    and locality =
-        | Local
-        | Region of region_name
-        | Nonlocal
-        | Unknown (* First pass might have un-propagated locality allocations; TODO: Use option? *)
 
     and typ =
         | Int
@@ -128,13 +128,23 @@ end
 module LocalEscapePass : (PASS with type return_t = unit) = struct
     type return_t = unit
 
-    let check_escape_by_return (variable_name : string) (stmts : statement list) = ()
+    (**
+     * Assuming variable is local
+     *)
+    let check_escape_by_return (variable_name : string) (stmts : statement list) =
+        List.iter (fun stmt -> match stmt with
+            | _ -> ()
+        ) stmts
 
     (**
      * Check if any param has "local" locality, and aborts if it escapes.
      *)
     let check_params (params : param list) (stmts : statement list) : unit =
-        List.iter (fun param -> let Param (id, _) = param in check_escape_by_return id stmts) params
+        List.iter (fun param -> match param with 
+            (** TODO: Local string type? Only ref types should check escape, not value types *)
+            | Param (Local, id, Struct_typ (_, _)) -> check_escape_by_return id stmts
+            | Param _ -> ()
+        ) params
 
     let run (p : program) : return_t = match p with
         | Declaration_list decls ->

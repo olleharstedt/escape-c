@@ -175,8 +175,11 @@ struct Person {
 }
 
 void foo(local Person p) {
-    local address = p.address
-    return address;
+    return p.address;  // Fails, field in local variable
+    return p.address.zipcode;  // OK, value type
+    return 1 + p.address.zipcode;  // OK, value type
+    return p.address.street;  // Fails
+    return copy p.address.street;  // OK??
 }
 
 ---
