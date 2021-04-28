@@ -8,6 +8,9 @@ module Ast = struct
     type program = 
         | Declaration_list of declaration list
 
+    and param =
+        | Param of identifier * typ
+
     and declaration =
         | Function of function_name * param list * statement list * typ
         | Struct of struct_name * struct_field list
@@ -19,9 +22,6 @@ module Ast = struct
     and struct_field_name = string
 
     and struct_field = struct_field_name * typ
-
-    and param =
-        | Param of identifier * typ
 
     and identifier = string
 
@@ -53,6 +53,7 @@ module Ast = struct
         | Plus of expression * expression
         (* TODO: "new" needs locality? *)
         | New of struct_name * struct_init
+        | Variable of locality * identifier
 end
 
 open Ast
@@ -121,6 +122,23 @@ module type PASS = sig
     val run : program -> return_t
 end
 
+(**
+ * This pass checks so that no local variable escapes its scope.
+ *)
+module LocalEscapePass : (PASS with type return_t = unit) = struct
+    type return_t = unit
+
+    let run (p : program) : return_t = match p with
+        | Declaration_list decls ->
+            List.iter (fun decl -> match decl with
+                | Function (name, params, stmts, t) -> ()
+                | _ -> ()
+            ) decls
+end
+
+(**
+ * This pass adds stack allocations to the AST.
+ *)
 module StackAllocPass : (PASS with type return_t = program) = struct
     type return_t = program
 
@@ -165,6 +183,7 @@ module GenerateCPass : (PASS with type return_t = string) = struct
         | Num i -> string_of_int i
         | Plus (_, _) -> failwith "Not implemented: Plus"
         | New (struct_name, struct_init) -> new_to_c struct_name struct_init
+        | Variable (_, id) -> id
 
     let assignment_to_c (typ : typ) (id : string) (expr : expression) : string =
         ""
@@ -254,7 +273,7 @@ let () =
             )
         ] in
     *)
-    let test2 =
+    let ast =
         Declaration_list [
             Struct (
                 "Point",
@@ -278,11 +297,11 @@ let () =
                             ]
                         )
                     );
-                    Return (Num 1)
+                    Return (Variable (Local, "p"))
                 ],
                 Int
             )
         ] in
-    (* TODO: Escape analysis pass could happen before *)
-    let test2 = StackAllocPass.run test2 in
-    print_endline (GenerateCPass.run test2)
+    LocalEscapePass.run ast;
+    let ast = StackAllocPass.run ast in
+    print_endline (GenerateCPass.run ast)
