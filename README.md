@@ -11,8 +11,8 @@ Tools:
 * OCaml + Menhir
 * Dune
 * Compile to C
-* Uses OCaml GC for blocked values
-* Uses pure C struct for non-escaping values
+* Uses ref counting for non-local variables
+* Uses pure C struct for local variables
 
 ---
 
@@ -22,13 +22,15 @@ Features:
 * Structs
 * Variables
 * Functions
-* Pass-by-reference
+* Pass-by-reference by default
 
 TODO: Generics? Array of types
 
 TODO: Alias graph with cyclic references (stack alloc)
 
 TODO: Least privilige when pass-by-reference? Leads to ownership.
+
+TODO: External locality kind, for mallocs() from the outside, which insert free() at end of scope?
 
 Keep track on stack size with getrlimit? And fallback to malloc if too big? Runtime overhead.
 
@@ -93,9 +95,7 @@ A struct in the code is compiled to both a native C struct (stack alloc) and an 
 
 That means they can't point to each other? Better to have OCaml values for everything, making the C-code less readable.
 
----
-
-Example code:
+## Example code
 
 ```
 // Struct
@@ -145,6 +145,39 @@ struct tree_node {
    ref tree_node right_Node;
 } tree_node;
 ```
+
+```
+void foo(local Point p) {
+    return p;  // Fails, local point cannot escape
+}
+
+void foo(local Point p) {
+    local points = [p, p];
+    return points;  // Fails
+}
+
+void foo(local Point p) {
+    local q = p;
+    return q;  // Fails
+}
+
+void foo(local Point p) {
+    let q = p;  // Fails, cannot alias local from non-local variable
+}
+
+struct Address {
+    int zipcode;
+}
+
+struct Person {
+    int id;
+    Address address;
+}
+
+void foo(local Person p) {
+    local address = p.address
+    return address;
+}
 
 ---
 

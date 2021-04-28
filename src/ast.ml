@@ -35,7 +35,7 @@ module Ast = struct
         | Local
         | Region of region_name
         | Nonlocal
-        | Unknown (* First pass might have un-propagated locality allocations *)
+        | Unknown (* First pass might have un-propagated locality allocations; TODO: Use option? *)
 
     and typ =
         | Int
@@ -128,10 +128,19 @@ end
 module LocalEscapePass : (PASS with type return_t = unit) = struct
     type return_t = unit
 
+    let check_escape_by_return (variable_name : string) (stmts : statement list) = ()
+
+    (**
+     * Check if any param has "local" locality, and aborts if it escapes.
+     *)
+    let check_params (params : param list) (stmts : statement list) : unit =
+        List.iter (fun param -> let Param (id, _) = param in check_escape_by_return id stmts) params
+
     let run (p : program) : return_t = match p with
         | Declaration_list decls ->
             List.iter (fun decl -> match decl with
-                | Function (name, params, stmts, t) -> ()
+                | Function (_, params, stmts, _) ->
+                    check_params params stmts
                 | _ -> ()
             ) decls
 end
