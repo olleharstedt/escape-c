@@ -55,6 +55,7 @@ module Ast = struct
         (* TODO: "new" needs locality? *)
         | New of struct_name * struct_init
         | Variable of locality * identifier
+        | Struct_access of expression * expression
 end
 
 open Ast
