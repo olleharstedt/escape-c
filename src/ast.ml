@@ -18,6 +18,11 @@ module Ast = struct
         | Nonlocal
         | Unknown (* First pass might have un-propagated locality allocations; TODO: Use option? *)
 
+    (** TODO: Differ between value type and reference type? *)
+    and typ =
+        | Int
+        | Struct_typ of locality * struct_name
+
     and param =
         | Param of locality * identifier * typ
 
@@ -36,10 +41,6 @@ module Ast = struct
     and identifier = string
 
     and region_name = string
-
-    and typ =
-        | Int
-        | Struct_typ of locality * struct_name
 
     and statement =
         | Struct_alloc of typ * identifier * struct_init
