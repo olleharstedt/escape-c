@@ -1,2 +1,5 @@
 (executable
     (name comp))
+
+(menhir
+  (modules parser))
