@@ -1,5 +1,2 @@
-all: ast.cmo
-	ocamlc comp.ml
-
-ast.cmo: ast.ml
-	ocamlc -c ast.ml
+all: comp.ml ast.ml
+	dune build comp.exe --profile release
