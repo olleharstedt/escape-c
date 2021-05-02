@@ -216,6 +216,8 @@ module GenerateCPass : (PASS with type return_t = string) = struct
        | Declaration_list decls -> List.fold_left (fun carry decl -> carry ^ declaration_to_c decl) "" decls
 end
 
+open Lexer
+
 (**
  * Compile with:
  *   ocamlc ast.ml
@@ -266,5 +268,7 @@ let () =
         ] in
     LocalEscapePass.run ast;
     let ast = StackAllocPass.run ast in
-    print_endline (GenerateCPass.run ast)
+    print_endline (GenerateCPass.run ast);
+    let lexbuf = Lexing.from_string "1+2" in
+    ()
 

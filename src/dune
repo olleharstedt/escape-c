@@ -1,5 +1,8 @@
 (executable
     (name comp))
 
+(ocamllex
+  (modules lexer))
+
 (menhir
   (modules parser))
