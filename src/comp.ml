@@ -19,6 +19,12 @@ struct Point = {
     int y;
 }
 
+function newPoint(): Point
+{
+    local p = new Point {1, 2};
+    return p;
+}
+
 // EscapeLang
 Point new_point() {
     local p = new Point {1, 2};
@@ -48,7 +54,23 @@ void add_point(local Point[] points) {
     points[0] = p;
 }
 
+function addPoint(local Point point): void
+{
+}
+
+function newPoint(int x, int y) with r: Point
+function newPoint(int x, int y): Point with r
+{
+    let p = new Point {x, y};
+    return p;
+}
+
 int main() {
+    return 0;
+}
+
+function main(): int
+{
     return 0;
 }
 
@@ -220,10 +242,43 @@ module GenerateCPass : (PASS with type return_t = string) = struct
        | Declaration_list decls -> List.fold_left (fun carry decl -> carry ^ declaration_to_c decl) "" decls
 end
 
+let string_of_token (token : Parser.token) : string =
+    let open Parser in
+    match token with
+        | WITH -> "WITH"
+        | STRUCT -> "STRUCT"
+        | STRING_LITERAL -> "STRING_LITERAL"
+        | SEMICOLON -> "SEMICOLON"
+        | RPAREN -> "RPAREN"
+        | RETURN -> "RETURN"
+        | REG -> "REG"
+        | RBRACK -> "RBRACE"
+        | RBRACE -> "RBRACE"
+        | PLUS -> "PLUS"
+        | NEW -> "NEW"
+        | NAME s  -> "NAME " ^ s
+        | MINUS -> "MINUS"
+        | LT -> "LT"
+        | LPAREN -> "LPAREN"
+        | LOCAL -> "LOCAL"
+        | LET -> "LET"
+        | LBRACK -> "LBRACK"
+        | LBRACE -> "LBRACE"
+        | INT i -> "INT" ^ string_of_int i
+        | GT -> "GT"
+        | EQEQ -> "EQEQ"
+        | EQ -> "EQ"
+        | EOF -> "EOF"
+        | CONSTANT -> "CONSTANT"
+        | _ -> failwith "Unknown token"
+
+
 (**
  * Compile with:
- *   ocamlc ast.ml
- *   ./a.out | gcc -xc - -o test1 -std=c99
+ *   dune build comp.exe
+ *
+ * Run with:
+ *   ./_build/default/comp.exe
  *)
 let () =
     (*
@@ -271,8 +326,14 @@ let () =
     LocalEscapePass.run ast;
     let ast = StackAllocPass.run ast in
     print_endline (GenerateCPass.run ast);
-    let source = "1+2;" in
+
+    (* Testing lexer and parser *)
+    let source = "int main() { return 0; }" in
     let linebuf = Lexing.from_string source in
+
+    print_endline (string_of_token (Lexer.token linebuf));
+
+    (*print_endline (match (Lexer.token linebuf) with *)
     let ast = try (Parser.main Lexer.token linebuf) with
       | Lexer.Error msg ->
           (*
