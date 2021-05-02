@@ -331,7 +331,18 @@ let () =
     let source = "int main() { return 0; }" in
     let linebuf = Lexing.from_string source in
 
-    print_endline (string_of_token (Lexer.token linebuf));
+    let rec dump_tokens linebuf =
+        let token = Lexer.token linebuf in
+        match token with
+            | Parser.EOF -> ()
+            | t ->
+                printf "%s" ((string_of_token t) ^ " ");
+                dump_tokens linebuf
+    in
+
+    (*print_endline (string_of_token (Lexer.token linebuf));*)
+    (* Ignore error at end-of-text *)
+    try dump_tokens linebuf with e -> ();
 
     (*print_endline (match (Lexer.token linebuf) with *)
     let ast = try (Parser.main Lexer.token linebuf) with

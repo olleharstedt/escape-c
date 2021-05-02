@@ -31,7 +31,8 @@ let integer_constant = decimal_constant
 rule token = parse
   | whitespace_char_no_newline+   { token lexbuf }
   | '\n'                          { new_line lexbuf; initial_linebegin lexbuf }
-  | integer_constant              { CONSTANT }
+  | integer_constant as i         { INT (int_of_string i) }
+  | "0"                           { INT 0 }
   | "="                           { EQ }
   | "=="                          { EQEQ }
   | "<"                           { LT }
