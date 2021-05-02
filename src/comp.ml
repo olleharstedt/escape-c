@@ -271,7 +271,7 @@ let () =
     LocalEscapePass.run ast;
     let ast = StackAllocPass.run ast in
     print_endline (GenerateCPass.run ast);
-    let source = "1+2" in
+    let source = "1+2;" in
     let linebuf = Lexing.from_string source in
     let ast = try (Parser.main Lexer.token linebuf) with
       | Lexer.Error msg ->

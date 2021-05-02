@@ -269,3 +269,7 @@ int main(int argc, char **argv)
 Example compiler
 
 https://github.com/SOwens/example-compiler
+
+C parser in Menhir
+
+https://github.com/jhjourdan/C11parser
