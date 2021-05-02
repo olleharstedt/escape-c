@@ -17,6 +17,7 @@
 %}
 
 %token <int> INT
+%token<string> NAME
 %token CONSTANT STRING_LITERAL
 %token PLUS MINUS
 (*%token TIMES DIV*)
@@ -31,6 +32,13 @@
 %token RBRACE "}"
 %token LBRACK "["
 %token RBRACK "]"
+%token RETURN "return"
+%token NEW "new"
+%token LET "let"
+%token LOCAL "local"
+%token REG "reg"
+%token WITH "with"
+%token STRUCT "struct"
 
 %left PLUS MINUS        /* lowest precedence */
 (*%left TIMES DIV         /* medium precedence */*)

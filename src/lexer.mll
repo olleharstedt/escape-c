@@ -45,6 +45,14 @@ rule token = parse
   | "]"                           { RBRACK }
   | '('                           { LPAREN }
   | ')'                           { RPAREN }
+  | "return"                      { RETURN }
+  | "new"                         { NEW }
+  | "let"                         { LET }
+  | "local"                       { LOCAL }
+  | "reg"                         { REG }
+  | "with"                        { WITH }
+  | "struct"                      { STRUCT }
+  | identifier as id              { NAME id }
   | eof                           { EOF }
   | _ { raise (Error (Printf.sprintf "At offset %d: unexpected character.\n" (Lexing.lexeme_start lexbuf))) }
 
