@@ -1,5 +1,9 @@
 open Ast
 open Printf
+open Lexer
+
+exception Parser_error of string
+exception Internal_error of string
 
 (*
 
@@ -216,8 +220,6 @@ module GenerateCPass : (PASS with type return_t = string) = struct
        | Declaration_list decls -> List.fold_left (fun carry decl -> carry ^ declaration_to_c decl) "" decls
 end
 
-open Lexer
-
 (**
  * Compile with:
  *   ocamlc ast.ml
@@ -269,6 +271,23 @@ let () =
     LocalEscapePass.run ast;
     let ast = StackAllocPass.run ast in
     print_endline (GenerateCPass.run ast);
-    let lexbuf = Lexing.from_string "1+2" in
+    let source = "1+2" in
+    let linebuf = Lexing.from_string source in
+    let ast = try (Parser.main Lexer.token linebuf) with
+      | Lexer.Error msg ->
+          (*
+          let tok = Lexing.lexeme linebuf in
+          *)
+          raise (Parser_error (sprintf "%s" msg))
+      | Parser.Error ->
+          (*
+          let tok = Lexing.lexeme linebuf in
+          *)
+          raise (Parser_error (sprintf "Could not parse '%s': error at %c" source (String.get source (Lexing.lexeme_start linebuf))))
+          (*raise (Parser_error (sprintf "Could not parse '%s'" source ))*)
+      | Failure msg ->
+          let open Lexing in
+          raise (Internal_error (sprintf "line = %d; col = %d" linebuf.lex_curr_p.pos_lnum linebuf.lex_curr_p.pos_cnum))
+    in
     ()
 
