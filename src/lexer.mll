@@ -22,28 +22,31 @@ exception Error of string
 (** Copied from Jacques-Henri Jourdan, Inria Paris *)
 let digit = ['0'-'9']
 let nondigit = ['_' 'a'-'z' 'A'-'Z']
+let nonzero_digit = ['1'-'9']
+let decimal_constant = nonzero_digit digit*
 let identifier = nondigit (nondigit|digit)*
 let whitespace_char_no_newline = [' ' '\t' '\012' '\r']
+let integer_constant = decimal_constant
 
 rule token = parse
   | whitespace_char_no_newline+   { token lexbuf }
   | '\n'                          { new_line lexbuf; initial_linebegin lexbuf }
-  | ';'
-      { SEMICOLON }
-  | ['0'-'9']+ as i
-      { INT (int_of_string i) }
-  | '+'
-      { PLUS }
-  | '-'
-      { MINUS }
-  | '('
-      { LPAREN }
-  | ')'
-      { RPAREN }
-  | eof
-      { EOF }
-  | _
-      { raise (Error (Printf.sprintf "At offset %d: unexpected character.\n" (Lexing.lexeme_start lexbuf))) }
+  | integer_constant              { CONSTANT }
+  | "="                           { EQ }
+  | "=="                          { EQEQ }
+  | "<"                           { LT }
+  | ">"                           { GT }
+  | ';'                           { SEMICOLON }
+  | '+'                           { PLUS }
+  | '-'                           { MINUS }
+  | "{"                           { LBRACE }
+  | "}"                           { RBRACE }
+  | "["                           { LBRACK }
+  | "]"                           { RBRACK }
+  | '('                           { LPAREN }
+  | ')'                           { RPAREN }
+  | eof                           { EOF }
+  | _ { raise (Error (Printf.sprintf "At offset %d: unexpected character.\n" (Lexing.lexeme_start lexbuf))) }
 
 and initial_linebegin = parse
   | '\n'                          { new_line lexbuf; initial_linebegin lexbuf }

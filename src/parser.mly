@@ -17,11 +17,20 @@
 %}
 
 %token <int> INT
+%token CONSTANT STRING_LITERAL
 %token PLUS MINUS
 (*%token TIMES DIV*)
 %token LPAREN RPAREN
 %token SEMICOLON
 %token EOF
+%token EQEQ "=="
+%token EQ "="
+%token LT "<"
+%token GT ">"
+%token LBRACE "{"
+%token RBRACE "}"
+%token LBRACK "["
+%token RBRACK "]"
 
 %left PLUS MINUS        /* lowest precedence */
 (*%left TIMES DIV         /* medium precedence */*)
