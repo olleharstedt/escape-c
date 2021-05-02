@@ -13,32 +13,39 @@
 (**************************************************************************)
 
 {
-  open Parser
+open Lexing
+open Parser
 
-  exception Error of string
+exception Error of string
 }
 
+(** Copied from Jacques-Henri Jourdan, Inria Paris *)
+let digit = ['0'-'9']
+let nondigit = ['_' 'a'-'z' 'A'-'Z']
+let identifier = nondigit (nondigit|digit)*
+let whitespace_char_no_newline = [' ' '\t' '\012' '\r']
+
 rule token = parse
-| [' ' '\t' '\n'] (* also ignore newlines, not only whitespace and tabs *)
-    { token lexbuf }
-(* add the semicolon as a new token *)
-| ';'
-    { SEMICOLON }
-| ['0'-'9']+ as i
-    { INT (int_of_string i) }
-| '+'
-    { PLUS }
-| '-'
-    { MINUS }
-| '*'
-    { TIMES }
-| '/'
-    { DIV }
-| '('
-    { LPAREN }
-| ')'
-    { RPAREN }
-| eof
-    { EOF }
-| _
-    { raise (Error (Printf.sprintf "At offset %d: unexpected character.\n" (Lexing.lexeme_start lexbuf))) }
+  | whitespace_char_no_newline+   { token lexbuf }
+  | '\n'                          { new_line lexbuf; initial_linebegin lexbuf }
+  | ';'
+      { SEMICOLON }
+  | ['0'-'9']+ as i
+      { INT (int_of_string i) }
+  | '+'
+      { PLUS }
+  | '-'
+      { MINUS }
+  | '('
+      { LPAREN }
+  | ')'
+      { RPAREN }
+  | eof
+      { EOF }
+  | _
+      { raise (Error (Printf.sprintf "At offset %d: unexpected character.\n" (Lexing.lexeme_start lexbuf))) }
+
+and initial_linebegin = parse
+  | '\n'                          { new_line lexbuf; initial_linebegin lexbuf }
+  | whitespace_char_no_newline    { initial_linebegin lexbuf }
+  | ""                            { token lexbuf }

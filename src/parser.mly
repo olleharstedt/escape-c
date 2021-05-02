@@ -17,13 +17,14 @@
 %}
 
 %token <int> INT
-%token PLUS MINUS TIMES DIV
+%token PLUS MINUS
+(*%token TIMES DIV*)
 %token LPAREN RPAREN
 %token SEMICOLON
 %token EOF
 
 %left PLUS MINUS        /* lowest precedence */
-%left TIMES DIV         /* medium precedence */
+(*%left TIMES DIV         /* medium precedence */*)
 %nonassoc UMINUS        /* highest precedence */
 
 /* changed the type, because the script does not return one value, but all
@@ -50,9 +51,11 @@ expr:
     { e1 + e2 }
 | e1 = expr MINUS e2 = expr
     { e1 - e2 }
+    (*
 | e1 = expr TIMES e2 = expr
     { e1 * e2 }
 | e1 = expr DIV e2 = expr
     { e1 / e2 }
+    *)
 | MINUS e = expr %prec UMINUS
     { - e }
