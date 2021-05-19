@@ -32,6 +32,8 @@ TODO: Least privilige when pass-by-reference? Leads to ownership.
 
 TODO: External locality kind, for mallocs() from the outside, which insert free() at end of scope?
 
+TODO: Flow-sensitive for null types?
+
 Keep track on stack size with getrlimit? And fallback to malloc if too big? Runtime overhead.
 
 If refs can be null, flow-sensitive checking must be done.
