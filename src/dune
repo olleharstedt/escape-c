@@ -1,5 +1,6 @@
 (executable
-    (name comp))
+  (preprocess (pps ppx_deriving.show ppx_deriving.ord))
+  (name comp))
 
 (ocamllex
   (modules lexer))

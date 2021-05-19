@@ -4,6 +4,7 @@
 
 type program = 
     | Declaration_list of declaration list
+[@@deriving show]
 
 (**
  * TODO: Implement as kind 

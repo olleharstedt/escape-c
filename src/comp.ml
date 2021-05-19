@@ -363,5 +363,6 @@ let () =
           let open Lexing in
           raise (Internal_error (sprintf "line = %d; col = %d" linebuf.lex_curr_p.pos_lnum linebuf.lex_curr_p.pos_cnum))
     in
+    print_endline (show_program ast);
     ()
 
