@@ -328,7 +328,7 @@ let () =
     print_endline (GenerateCPass.run ast);
 
     (* Testing lexer and parser *)
-    let source = "function main(): int " in
+    let source = "function main(): int { return 1; }" in
     (* NAME int NAME main LPAREN RPAREN LBRACE RETURN INT0 SEMICOLON RBRACE *)
     let linebuf = Lexing.from_string source in
 
@@ -365,5 +365,8 @@ let () =
           raise (Internal_error (sprintf "line = %d; col = %d" linebuf.lex_curr_p.pos_lnum linebuf.lex_curr_p.pos_cnum))
     in
     print_endline (show_program ast);
+    LocalEscapePass.run ast;
+    let ast = StackAllocPass.run ast in
+    print_endline (GenerateCPass.run ast);
     ()
 

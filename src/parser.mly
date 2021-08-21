@@ -50,6 +50,7 @@
 %nonassoc UMINUS        /* highest precedence */
 
 %type <declaration> decl
+%type <statement> stat
 
 /* changed the type, because the script does not return one value, but all
  * results which are calculated in the file */
@@ -62,4 +63,6 @@ program:
 (*NAME int NAME main LPAREN RPAREN LBRACE RETURN INT0 SEMICOLON RBRACE*)
 (*int main() { return 0; }*)
 (*decl: t=NAME n=NAME LPAREN RPAREN LBRACE RBRACE {Function (n, [], [], Int)}*)
-decl: "function" f=NAME "(" ")" ":" t=NAME {Function (f, [], [], type_of_string t)}
+decl: "function" f=NAME "(" ")" ":" t=NAME "{" s=list(stat) "}" {Function (f, [], s, type_of_string t)}
+
+stat: "return" n=INT ";" {Return (Num n)}
