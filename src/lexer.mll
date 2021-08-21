@@ -55,6 +55,8 @@ rule token = parse
   | "with"                        { WITH }
   | "struct"                      { STRUCT }
   | "function"                    { FUNCTION }
+  | "~"                           { TILDE }
+  | "function"                    { FUNCTION }
   | identifier as id              { NAME id }
   | eof                           { EOF }
   | _ { raise (Error (Printf.sprintf "At offset %d: unexpected character.\n" (Lexing.lexeme_start lexbuf))) }

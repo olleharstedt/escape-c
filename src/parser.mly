@@ -35,6 +35,7 @@
 %token RBRACE "}"
 %token LBRACK "["
 %token RBRACK "]"
+%token TILDE "~"
 %token RETURN "return"
 %token NEW "new"
 %token LET "let"
@@ -56,7 +57,7 @@
 %%
 
 program:
-| decl=list(decl); EOF {Declaration_list decl}
+| d=list(decl); EOF {Declaration_list d}
 
 (*NAME int NAME main LPAREN RPAREN LBRACE RETURN INT0 SEMICOLON RBRACE*)
 (*int main() { return 0; }*)
