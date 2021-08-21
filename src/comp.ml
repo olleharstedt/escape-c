@@ -86,9 +86,29 @@ Declaration_list [
 ]
  *)
 
+let global_namespace : (string, struct_field list) Hashtbl.t = Hashtbl.create 10
+
 module type PASS = sig
     type return_t
     val run : program -> return_t
+end
+
+module AddStructToNamespacePass : (PASS with type return_t = unit) = struct
+    type return_t = unit
+
+    (**
+     * Loop through AST and add all structs to the global namespace hashtable.
+     *
+     * @param p The program AST
+     * @return return_t
+     *)
+    let run (p : program) : return_t = match p with
+        | Declaration_list decls ->
+            List.iter (fun decl -> match decl with
+                | Struct (struct_name, struct_fields) ->
+                    Hashtbl.add global_namespace struct_name struct_fields
+                | _ -> ()
+            ) decls
 end
 
 (**
@@ -130,12 +150,39 @@ end
 module StackAllocPass : (PASS with type return_t = program) = struct
     type return_t = program
 
+    (**
+     * Take an expression list, like "1, 2" inside Point {1, 2}, and make a struct_init of it
+     *
+     * @param name The name of the struct as saved in global namespace
+     * @param exprs
+     * @return struct_init
+     * @TODO Split into separate pass?
+     *)
+    let exprs_to_struct_init (name : string) (exprs : expression list) : struct_init =
+        let struct_fields = match Hashtbl.find_opt global_namespace name with
+            | Some s -> s
+            | None -> failwith (sprintf "Could not find struct with name %s in global namespace" name)
+        in
+        (* Must initialize exact number of fields *)
+        if List.length struct_fields = List.length exprs
+        then
+            List.mapi (fun i expr -> match expr with
+                | Num n -> ((List.nth struct_fields i), Num n)
+                | _ -> failwith "Can only initialize struct with int"
+            ) exprs
+        else
+            failwith (sprintf "Number of initialized fields does not equal total number of fields instruct")
+
+    (**
+     * @param stmts
+     * @return statement list
+     *)
     let rec insert_stack_alloc_stmts (stmts : statement list) : statement list = match stmts with
         | [] -> []
         | Assignment (typ, id, expr)::tail ->
             begin match expr with
-                | New (struct_name, struct_init) ->
-                       Struct_alloc (typ, id, struct_init)
+                | New (struct_name, exprs) ->
+                       Struct_alloc (typ, id, exprs_to_struct_init struct_name exprs)
                     :: Assignment (typ, id, expr)
                     :: insert_stack_alloc_stmts tail
                 | _ -> failwith "Unsupported assignment structure"
@@ -165,12 +212,12 @@ module GenerateCPass : (PASS with type return_t = string) = struct
         | Int -> "int"
         | Struct_typ (locality, t) -> t
 
-    let new_to_c (struct_name : string) (struct_init : (struct_field * expression) list) : string = ""
+    let new_to_c (struct_name : string) (struct_init : expression list) : string = ""
 
     let expression_to_c (e : expression) : string = match e with
         | Num i -> string_of_int i
         | Plus (_, _) -> failwith "Not implemented: Plus"
-        | New (struct_name, struct_init) -> new_to_c struct_name struct_init
+        | New (struct_name, exprs) -> new_to_c struct_name exprs
         | Variable (_, id) -> id
 
     let assignment_to_c (typ : typ) (id : string) (expr : expression) : string =
@@ -313,8 +360,8 @@ let () =
                         New (
                             "Point",
                             [
-                                (("x", Int), Num 1);
-                                (("y", Int), Num 2);
+                                Num 1;
+                                Num 2;
                             ]
                         )
                     );
@@ -323,12 +370,19 @@ let () =
                 Int
             )
         ] in
+    AddStructToNamespacePass.run ast;
     LocalEscapePass.run ast;
     let ast = StackAllocPass.run ast in
     print_endline (GenerateCPass.run ast);
 
     (* Testing lexer and parser *)
-    let source = "struct Point = { int x; int y;}\nfunction main(): int { return 1; }" in
+    let source = "
+    struct Point = {int x; int y;}
+    function main(): int {
+        let p = new Point{1, 2};
+        return 1;
+    }
+    " in
     (* NAME int NAME main LPAREN RPAREN LBRACE RETURN INT0 SEMICOLON RBRACE *)
     let linebuf = Lexing.from_string source in
 
@@ -365,6 +419,7 @@ let () =
           raise (Internal_error (sprintf "line = %d; col = %d" linebuf.lex_curr_p.pos_lnum linebuf.lex_curr_p.pos_cnum))
     in
     print_endline (show_program ast);
+    AddStructToNamespacePass.run ast;
     LocalEscapePass.run ast;
     let ast = StackAllocPass.run ast in
     print_endline (GenerateCPass.run ast);

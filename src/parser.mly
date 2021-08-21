@@ -44,15 +44,17 @@
 %token WITH "with"
 %token STRUCT "struct"
 %token FUNCTION "function"
+%token IN "in"
 
 %left PLUS MINUS        /* lowest precedence */
 (*%left TIMES DIV         /* medium precedence */*)
 %nonassoc UMINUS        /* highest precedence */
 
-%type <declaration> decl
-%type <statement> stmt
+%type <declaration> declaration
+%type <statement> statement
 %type <struct_field> struct_field
-%type <typ> t
+%type <typ> typ
+%type <expression> expr
 
 /* changed the type, because the script does not return one value, but all
  * results which are calculated in the file */
@@ -60,17 +62,26 @@
 %%
 
 program:
-    | d=list(decl); EOF {Declaration_list d}
+    | d=list(declaration); EOF {Declaration_list d}
 
 (*NAME int NAME main LPAREN RPAREN LBRACE RETURN INT0 SEMICOLON RBRACE*)
 (*int main() { return 0; }*)
-(*decl: t=NAME n=NAME LPAREN RPAREN LBRACE RBRACE {Function (n, [], [], Int)}*)
-decl:
-    | "function" f=NAME "(" ")" ":" t=t "{" s=list(stmt) "}" {Function (f, [], s, t)}
+(*declaration: t=NAME n=NAME LPAREN RPAREN LBRACE RBRACE {Function (n, [], [], Int)}*)
+declaration:
+    | "function" f=NAME "(" ")" ":" t=typ "{" s=list(statement) "}" {Function (f, [], s, t)}
     | "struct" s=NAME "=" "{" f=list(struct_field) "}" {Struct (s, f)}
 
-stmt: "return" n=INT ";" {Return (Num n)}
+statement: 
+  | "return" n=INT ";"          {Return (Num n)}
+  | "let" v=NAME "=" e=expr     {Assignment (Infer_me, v, e)}
 
-struct_field: t=t s=NAME ";" {(s, t)}
+struct_field: t=typ s=NAME ";"  {(s, t)}
 
-t: t=NAME {type_of_string t}
+typ: t=NAME                     {type_of_string t}
+
+expr:
+  | i=INT                               {Num i}
+  | e=expr "+" f=expr                   {Plus (e, f)} 
+  | "new" s=NAME "{" struct_init=list(expr) "}" {New (s, struct_init)}
+
+(* local p = new Point {1, 2}; *)

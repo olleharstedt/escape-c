@@ -16,14 +16,16 @@ and locality =
     | Nonlocal
     | Unknown (* First pass might have un-propagated locality allocations; TODO: Use option? *)
 
-(** TODO: Differ between value type and reference type? *)
+(** TODO: Differ between value type and reference type? Always pass by reference except primitive types (int, string) *)
 and typ =
     | Int
     | Struct_typ of locality * struct_name
+    | Infer_me
 
 and param =
     | Param of locality * identifier * typ
 
+(** Top-level constructs *)
 and declaration =
     | Function of function_name * param list * statement list * typ
     | Struct of struct_name * struct_field list
@@ -51,7 +53,7 @@ and expression =
     | Num of int
     | Plus of expression * expression
     (* TODO: "new" needs locality? *)
-    | New of struct_name * struct_init
+    | New of struct_name * expression list
     | Variable of locality * identifier
     (*
     | Struct_access of expression * expression
