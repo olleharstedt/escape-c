@@ -328,7 +328,7 @@ let () =
     print_endline (GenerateCPass.run ast);
 
     (* Testing lexer and parser *)
-    let source = "int main() {}" in
+    let source = "function main(): int " in
     (* NAME int NAME main LPAREN RPAREN LBRACE RETURN INT0 SEMICOLON RBRACE *)
     let linebuf = Lexing.from_string source in
 
@@ -344,7 +344,8 @@ let () =
     (* Ignore error at end-of-text *)
     (*try dump_tokens linebuf with e -> ();*)
 
-    let linebuf = Lexing.from_string source in
+    (*Lexing.flush_input linebuf;*)
+    (*let linebuf = Lexing.from_string source in*)
 
     (*print_endline (match (Lexer.token linebuf) with *)
     let ast = try (Parser.program Lexer.token linebuf) with

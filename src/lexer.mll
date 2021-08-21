@@ -38,6 +38,7 @@ rule token = parse
   | "<"                           { LT }
   | ">"                           { GT }
   | ';'                           { SEMICOLON }
+  | ':'                           { COLON }
   | '+'                           { PLUS }
   | '-'                           { MINUS }
   | "{"                           { LBRACE }
@@ -53,6 +54,7 @@ rule token = parse
   | "reg"                         { REG }
   | "with"                        { WITH }
   | "struct"                      { STRUCT }
+  | "function"                    { FUNCTION }
   | identifier as id              { NAME id }
   | eof                           { EOF }
   | _ { raise (Error (Printf.sprintf "At offset %d: unexpected character.\n" (Lexing.lexeme_start lexbuf))) }

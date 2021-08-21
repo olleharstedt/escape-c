@@ -19,15 +19,18 @@
 %token <int> INT
 %token <string> NAME
 %token CONSTANT STRING_LITERAL
-%token PLUS MINUS
+%token PLUS "+"
+%token MINUS "-"
 (*%token TIMES DIV*)
-%token LPAREN RPAREN
-%token SEMICOLON
+%token COLON ":"
+%token SEMICOLON ";"
 %token EOF
 %token EQEQ "=="
 %token EQ "="
 %token LT "<"
 %token GT ">"
+%token LPAREN "("
+%token RPAREN ")"
 %token LBRACE "{"
 %token RBRACE "}"
 %token LBRACK "["
@@ -39,6 +42,7 @@
 %token REG "reg"
 %token WITH "with"
 %token STRUCT "struct"
+%token FUNCTION "function"
 
 %left PLUS MINUS        /* lowest precedence */
 (*%left TIMES DIV         /* medium precedence */*)
@@ -56,5 +60,5 @@ program:
 
 (*NAME int NAME main LPAREN RPAREN LBRACE RETURN INT0 SEMICOLON RBRACE*)
 (*int main() { return 0; }*)
-decl:
-| t=NAME n=NAME LPAREN RPAREN LBRACE RBRACE {Function (n, [], [], Int)}
+(*decl: t=NAME n=NAME LPAREN RPAREN LBRACE RBRACE {Function (n, [], [], Int)}*)
+decl: "function" f=NAME "(" ")" ":" t=NAME {Function (f, [], [], type_of_string t)}
