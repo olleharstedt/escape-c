@@ -54,32 +54,53 @@ For three scenarios:
 
 Also global variables for known size but no known scope?
 
+* Pass-by-reference by default (as in Java)
+
 ```
-local p = new Point {1, 2};     // Stack alloc, cannot escape
-r = new Region;
+local p = new Point {1, 2};            // Stack alloc, cannot escape
+let p = new Point {1, 2} in stack;     // Stack alloc, cannot escape
+let p = new Point {1, 2} locally;
+let p = new ~Point {1, 2};
+loc p = new Point {1, 2};
+let r = new Region;
 let q = new Point {3, 4} in r;  // Region alloc, cannot escape region scope
 let s = new Point {6, 7};       // GC, can escape scope
+let rect = new ~Rectangle{new ~Point{1, 2}, new ~Point{3, 4}};
+let rect = new @Rectangle{new @Point{1, 2}, new @Point{3, 4}};
+let area = rect_area(rect);
+let dist = distance(new ~Point{1, 2}, new ~Point{3, 4});
+let dist = distance(new Point{1, 2} in stack, new Point{3, 4} in stack);
+let dist = distance(new Point{1, 2} in r, new Point{3, 4} in r);
+let dist = distance(new Point{1, 2}, new Point{3, 4});
+
+function distance(Point p1, Point p2)
+{
+    return square(abs(p1), abs(p2));
+}
+
+function rect_area(Rectangle r): float
+{
+    return r.p + r.q;
+}
 ```
 
 TODO: Interaction between different memories?
 
-TODO: How to compile to C?
+TODO: How to know which memory allocation strat is allowed for a function?
+
+TODO: A function that takes three args: stack allocated, region alloc and ref count alloc. What does the func need to know?
+
+TODO: Array concatenation for stack, reg and refcount alloc.
+
+function foo(Stack s, Reg r, Refcount rc): void
+{
+}
 
 ---
 
 Can use Rust instead, without malloc? Rc or Arc without lifetime annotations?
  
 Rust `no_std`: https://rust-embedded.github.io/book/intro/no-std.html
-
-Three layout kinds?
-
-* val - value types allocated on the stack with a fixed lifetime
-* [&val - reference to a value type, constrained (only as function arguments to avoid copying? non-aliasing, cannot be used in arrays, collections, etc)]
-* ref - reference to heap allocated boxed value, garbage collected
-
-BUT: How to differ between value types that can be referenced, and those that cannot? Do we care?
-
-ref types can only compose of other ref types. val types can only compose other val types.
 
 Arrays are pointers in C, cannot return from a function if stack allocated. But can pass around.
 
@@ -92,10 +113,6 @@ function array_test() {
 ```
 
 ---
-
-A struct in the code is compiled to both a native C struct (stack alloc) and an OCaml record (GC alloc).
-
-That means they can't point to each other? Better to have OCaml values for everything, making the C-code less readable.
 
 ## Example code
 
@@ -124,7 +141,7 @@ struct Rectangle {
     bottom_corner: Point;
 }
 
-function new_rectangle(val Point p1, ref Point p2): Rectangle {
+function new_rectangle(Point p1, Point &p2): Rectangle {
     // What should happen here?
     // How to differ between val Recangle and ref Rectangle here?
     return Rectangle {
@@ -149,7 +166,7 @@ struct tree_node {
 ```
 
 ```
-void foo(local Point p) {
+function foo(local Point p): void {
     return p;  // Fails, local point cannot escape
 }
 
