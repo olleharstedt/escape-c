@@ -50,7 +50,9 @@
 %nonassoc UMINUS        /* highest precedence */
 
 %type <declaration> decl
-%type <statement> stat
+%type <statement> stmt
+%type <struct_field> struct_field
+%type <typ> t
 
 /* changed the type, because the script does not return one value, but all
  * results which are calculated in the file */
@@ -58,11 +60,17 @@
 %%
 
 program:
-| d=list(decl); EOF {Declaration_list d}
+    | d=list(decl); EOF {Declaration_list d}
 
 (*NAME int NAME main LPAREN RPAREN LBRACE RETURN INT0 SEMICOLON RBRACE*)
 (*int main() { return 0; }*)
 (*decl: t=NAME n=NAME LPAREN RPAREN LBRACE RBRACE {Function (n, [], [], Int)}*)
-decl: "function" f=NAME "(" ")" ":" t=NAME "{" s=list(stat) "}" {Function (f, [], s, type_of_string t)}
+decl:
+    | "function" f=NAME "(" ")" ":" t=t "{" s=list(stmt) "}" {Function (f, [], s, t)}
+    | "struct" s=NAME "=" "{" f=list(struct_field) "}" {Struct (s, f)}
 
-stat: "return" n=INT ";" {Return (Num n)}
+stmt: "return" n=INT ";" {Return (Num n)}
+
+struct_field: t=t s=NAME ";" {(s, t)}
+
+t: t=NAME {type_of_string t}

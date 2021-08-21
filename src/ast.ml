@@ -59,4 +59,4 @@ and expression =
 
 let type_of_string s = match s with
     | "int" -> Int
-    | _ -> failwith ("Unsupported type: " ^ s)
+    | s -> Struct_typ (Unknown, s)

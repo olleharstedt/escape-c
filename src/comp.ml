@@ -328,7 +328,7 @@ let () =
     print_endline (GenerateCPass.run ast);
 
     (* Testing lexer and parser *)
-    let source = "function main(): int { return 1; }" in
+    let source = "struct Point = { int x; int y;}\nfunction main(): int { return 1; }" in
     (* NAME int NAME main LPAREN RPAREN LBRACE RETURN INT0 SEMICOLON RBRACE *)
     let linebuf = Lexing.from_string source in
 
