@@ -455,6 +455,7 @@ let () =
     print_endline (GenerateCPass.run ast);
 
     (* Testing lexer and parser *)
+    (* TODO: Add infer pass *)
     let source = "
         struct Point = {int x; int y;}
         function main(): int {
