@@ -3,6 +3,7 @@ open Printf
 open Lexer
 
 exception Parser_error of string
+exception Lexer_error of string
 exception Internal_error of string
 
 (*
@@ -181,11 +182,13 @@ module StackAllocPass : (PASS with type return_t = program) = struct
         | [] -> []
         | Assignment (typ, id, expr)::tail ->
             begin match expr with
+                (* TODO: Nested "new" expressions, e.g. new Rectangle{new Point{1, 2}, new Point{3, 4}} *)
                 | New (struct_name, exprs) ->
                        Struct_alloc (typ, id, exprs_to_struct_init struct_name exprs)
                     :: Assignment (typ, id, expr)
                     :: insert_stack_alloc_stmts tail
-                | _ -> failwith "Unsupported assignment structure"
+                (* For all other expressions, don't change anything *)
+                | _ -> Assignment (typ, id, expr)::tail
             end
         | s::tail ->
             s :: insert_stack_alloc_stmts tail
@@ -205,26 +208,62 @@ module StackAllocPass : (PASS with type return_t = program) = struct
        | Declaration_list decls -> Declaration_list (List.map (fun decl -> insert_stack_alloc_decl decl) decls)
 end
 
+(**
+ * Loop the AST and spit out C code as a string
+ *)
 module GenerateCPass : (PASS with type return_t = string) = struct
     type return_t = string
 
+    (**
+     * Type to C
+     *
+     * @param t
+     * @return string
+     *)
     let typ_to_c (t : typ) : string = match t with
         | Int -> "int"
         | Struct_typ (locality, t) -> t
 
+    (**
+     * New allocation to C
+     *
+     * @param struct_name
+     * @param struct_init
+     * @return string
+     *)
     let new_to_c (struct_name : string) (struct_init : expression list) : string = ""
 
+    (**
+     * Expression to C
+     *
+     * @param e
+     * @return string
+     *)
     let expression_to_c (e : expression) : string = match e with
         | Num i -> string_of_int i
         | Plus (_, _) -> failwith "Not implemented: Plus"
         | New (struct_name, exprs) -> new_to_c struct_name exprs
         | Variable (_, id) -> id
 
+    (**
+     * Assignment to C
+     *
+     * @param typ
+     * @param id
+     * @param expr
+     * @return string
+     *)
     let assignment_to_c (typ : typ) (id : string) (expr : expression) : string =
         ""
         (* TODO: Logic happens in struct_alloc *)
         (*typ_to_c typ ^ " " ^ id ^ " = " ^ expression_to_c expr*)
 
+    (**
+     * Struct init to C
+     *
+     * @param init
+     * @return string
+     *)
     let struct_init_to_c (init : struct_init) : string = 
         let s = List.fold_left (fun carry (field, expression) ->
             carry ^ begin match field, expression with
@@ -237,6 +276,12 @@ module GenerateCPass : (PASS with type return_t = string) = struct
         in
         String.sub s 0 (String.length s - 1)
 
+    (**
+     * Statement to C
+     *
+     * @param s
+     * @return string
+     *)
     let statement_to_c (s : statement) : string = match s with
         | Return ex -> "return " ^ expression_to_c ex ^ ";\n"
         | Struct_alloc (typ, identifier, struct_init) ->
@@ -251,28 +296,62 @@ module GenerateCPass : (PASS with type return_t = string) = struct
                 | Struct_typ (Local, name) ->
                     assignment_to_c typ id expr
                 | Int -> assignment_to_c typ id expr
-                | _ -> failwith "Not iplemented"
+                | Infer_me -> failwith "Missing inference of assignment type"
+                | _ -> failwith "Not implemented"
             end
 
+    (**
+     * Struct field to C
+     *
+     * @param field
+     * @return string
+     *)
     let struct_field_to_c (field : struct_field) : string = match field with
         | (name, typ) -> typ_to_c typ ^ " " ^ name ^ ";\n"
 
+    (**
+     * Struct fields to C
+     *
+     * @param fields
+     * @return string
+     *)
     let struct_fields_to_c (fields : struct_field list) : string =
         let s = List.fold_left (fun carry struct_field -> carry ^ struct_field_to_c struct_field) "" fields in
         String.sub s 0 (String.length s - 1)
 
+    (**
+     * Struct to C
+     *
+     * @param name
+     * @param fields
+     * @return string
+     *)
     let struct_to_c (name: string) (fields : struct_field list) : string =
         "typedef struct __" ^ name ^ "{\n" ^
         struct_fields_to_c fields ^ "\n" ^
         "} " ^ name ^ ";\n"
 
-    let function_to_c (name: string) (params : param list) (stmts : statement list) (t: typ) =
+    (**
+     * Function to C
+     *
+     * @param name
+     * @param params
+     * @param t
+     * @return string
+     *)
+    let function_to_c (name: string) (params : param list) (stmts : statement list) (t: typ) : string =
         typ_to_c t ^ " " ^
         (* TODO: params *)
         name ^ "(" ^ ") {\n" ^
         (List.fold_left (fun carry stmt -> carry ^ statement_to_c stmt) "" stmts) ^
         "}\n"
 
+    (**
+     * Declaration to C
+     *
+     * @param d
+     * @return string
+     *)
     let declaration_to_c (d : declaration) : string = match d with
         | Function (name, params, stmts, t) ->
             function_to_c name params stmts t
@@ -377,11 +456,11 @@ let () =
 
     (* Testing lexer and parser *)
     let source = "
-    struct Point = {int x; int y;}
-    function main(): int {
-        let p = new Point{1, 2};
-        return 1;
-    }
+        struct Point = {int x; int y;}
+        function main(): int {
+            let p = 1;
+            return 1;
+        }
     " in
     (* NAME int NAME main LPAREN RPAREN LBRACE RETURN INT0 SEMICOLON RBRACE *)
     let linebuf = Lexing.from_string source in
@@ -407,7 +486,7 @@ let () =
           (*
           let tok = Lexing.lexeme linebuf in
           *)
-          raise (Parser_error (sprintf "%s" msg))
+          raise (Lexer_error (sprintf "%s" msg))
       | Parser.Error ->
           (*
           let tok = Lexing.lexeme linebuf in

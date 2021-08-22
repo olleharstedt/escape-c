@@ -73,7 +73,7 @@ declaration:
 
 statement: 
   | "return" n=INT ";"          {Return (Num n)}
-  | "let" v=NAME "=" e=expr     {Assignment (Infer_me, v, e)}
+  | "let" v=NAME "=" e=expr ";" {Assignment (Infer_me, v, e)}
 
 struct_field: t=typ s=NAME ";"  {(s, t)}
 
@@ -84,4 +84,4 @@ expr:
   | e=expr "+" f=expr                   {Plus (e, f)} 
   | "new" s=NAME "{" struct_init=list(expr) "}" {New (s, struct_init)}
 
-(* local p = new Point {1, 2}; *)
+(* let p = new Point {1, 2}; *)
