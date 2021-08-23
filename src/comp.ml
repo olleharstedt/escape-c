@@ -209,6 +209,51 @@ module StackAllocPass : (PASS with type return_t = program) = struct
 end
 
 (**
+ * Replace all Infer_me types with proper types.
+ *)
+module InferMePass : (PASS with type return_t = program) = struct
+    type return_t = program
+
+    (**
+     * @param expr
+     * @return typ
+     *)
+    let infer_expression (expr : expression) : typ = Int 
+
+    (**
+     * Infer type of statements inside function.
+     *
+     * @param params Input arguments to function
+     * @param stmts List of all statements inside function
+     * @param t Return type of function
+     * @return statement list Statements with inferred types
+     *)
+    let infer_statements (params : param list) (stmts : statement list) (t : typ) : statement list =
+        List.map (fun s -> match s with
+            | Assignment (Infer_me, id, expr) -> Assignment (infer_expression expr, id, expr)
+            (*| Return of expression*)
+            (* Ignore struct alloc *)
+            | s -> s
+        ) stmts
+
+    (**
+     * Run the pass
+     *
+     * @param p
+     * @return program
+     *)
+    let run (p : program) : program = match p with
+       | Declaration_list decls -> Declaration_list
+            (List.map
+                (fun decl -> match decl with
+                    | Function (name, params, stmts, t) -> Function (name, params, infer_statements params stmts t, t)
+                    | d -> d
+                )
+                decls
+            )
+end
+
+(**
  * Loop the AST and spit out C code as a string
  *)
 module GenerateCPass : (PASS with type return_t = string) = struct
@@ -450,6 +495,7 @@ let () =
             )
         ] in
     AddStructToNamespacePass.run ast;
+    let ast = InferMePass.run ast in
     LocalEscapePass.run ast;
     let ast = StackAllocPass.run ast in
     print_endline (GenerateCPass.run ast);
@@ -499,9 +545,9 @@ let () =
           raise (Internal_error (sprintf "line = %d; col = %d" linebuf.lex_curr_p.pos_lnum linebuf.lex_curr_p.pos_cnum))
     in
     print_endline (show_program ast);
+
     AddStructToNamespacePass.run ast;
+    let ast = InferMePass.run ast in
     LocalEscapePass.run ast;
     let ast = StackAllocPass.run ast in
-    print_endline (GenerateCPass.run ast);
-    ()
-
+    print_endline (GenerateCPass.run ast)

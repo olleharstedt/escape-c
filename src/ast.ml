@@ -43,9 +43,15 @@ and identifier = string
 and region_name = string
 
 and statement =
+    (* Struct_alloc is an internal statement used by C pass *)
     | Struct_alloc of typ * identifier * struct_init
+    (* let a = ...; *)
     | Assignment of typ * identifier * expression
+    (* return ...; *)
     | Return of expression
+    (* Function_call that returns void *)
+    (* If-statement, or only if-expression *)
+    (* While-loop *)
 
 and struct_init = (struct_field * expression) list
 
@@ -57,6 +63,7 @@ and expression =
     | Variable of locality * identifier
     (*
     | Struct_access of expression * expression
+    | Function_call of ...
     *)
 
 let type_of_string s = match s with
