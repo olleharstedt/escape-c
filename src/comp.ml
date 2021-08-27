@@ -1,6 +1,5 @@
 open Ast
 open Printf
-open Lexer
 
 exception Parser_error of string
 exception Lexer_error of string
@@ -295,6 +294,7 @@ module GenerateCPass : (PASS with type return_t = string) = struct
     let typ_to_c (t : typ) : string = match t with
         | Int -> "int"
         | Struct_typ (locality, t) -> t
+        | Infer_me -> failwith "Cannot convert Infer_me to a C type"
 
     (**
      * New allocation to C
@@ -326,9 +326,8 @@ module GenerateCPass : (PASS with type return_t = string) = struct
      * @return string
      *)
     let assignment_to_c (typ : typ) (id : string) (expr : expression) : string =
-        ""
+        typ_to_c typ ^ " " ^ id ^ " = " ^ expression_to_c expr ^ ";\n"
         (* TODO: Logic happens in struct_alloc *)
-        (*typ_to_c typ ^ " " ^ id ^ " = " ^ expression_to_c expr*)
 
     (**
      * Struct init to C
@@ -365,7 +364,7 @@ module GenerateCPass : (PASS with type return_t = string) = struct
             end
         | Assignment (typ, id, expr) -> 
             begin match typ with
-                | Struct_typ (Local, name) ->
+                | Struct_typ (Local, _) ->
                     assignment_to_c typ id expr
                 | Int -> assignment_to_c typ id expr
                 | Infer_me -> failwith "Missing inference of assignment type"
@@ -538,6 +537,7 @@ let () =
     (* NAME int NAME main LPAREN RPAREN LBRACE RETURN INT0 SEMICOLON RBRACE *)
     let linebuf = Lexing.from_string source in
 
+    (*
     let rec dump_tokens linebuf =
         let token = Lexer.token linebuf in
         match token with
@@ -546,6 +546,7 @@ let () =
                 printf "%s" ((string_of_token t) ^ " ");
                 dump_tokens linebuf
     in
+    *)
 
     (* Ignore error at end-of-text *)
     (*try dump_tokens linebuf with e -> ();*)
@@ -568,6 +569,7 @@ let () =
           (*raise (Parser_error (sprintf "Could not parse '%s'" source ))*)
       | Failure msg ->
           let open Lexing in
+          print_endline msg;
           raise (Internal_error (sprintf "line = %d; col = %d" linebuf.lex_curr_p.pos_lnum linebuf.lex_curr_p.pos_cnum))
     in
 
