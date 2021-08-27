@@ -87,7 +87,8 @@ Declaration_list [
 ]
  *)
 
-let global_namespace : (string, struct_field list) Hashtbl.t = Hashtbl.create 10
+let global_struct_namespace : (string, struct_field list) Hashtbl.t = Hashtbl.create 10
+type var_namespace = (string, typ) Hashtbl.t
 
 module type PASS = sig
     type return_t
@@ -107,7 +108,7 @@ module AddStructToNamespacePass : (PASS with type return_t = unit) = struct
         | Declaration_list decls ->
             List.iter (fun decl -> match decl with
                 | Struct (struct_name, struct_fields) ->
-                    Hashtbl.add global_namespace struct_name struct_fields
+                    Hashtbl.add global_struct_namespace struct_name struct_fields
                 | _ -> ()
             ) decls
 end
@@ -160,7 +161,7 @@ module StackAllocPass : (PASS with type return_t = program) = struct
      * @TODO Split into separate pass?
      *)
     let exprs_to_struct_init (name : string) (exprs : expression list) : struct_init =
-        let struct_fields = match Hashtbl.find_opt global_namespace name with
+        let struct_fields = match Hashtbl.find_opt global_struct_namespace name with
             | Some s -> s
             | None -> failwith (sprintf "Could not find struct with name %s in global namespace" name)
         in
@@ -218,10 +219,32 @@ module InferMePass : (PASS with type return_t = program) = struct
      * @param expr
      * @return typ
      *)
-    let infer_expression (expr : expression) : typ = Int 
+    let rec infer_expression (expr : expression) (ns : var_namespace) : typ = match expr with
+        | Num _ -> Int
+        | Plus (expr, expr2) ->
+            let t1 = infer_expression expr ns in
+            let t2 = infer_expression expr2 ns in
+            if t1 = t2 then t1 else failwith "Expressions in Plus do not have same type"
+        | New (_, exprs) ->
+            let types = List.map (fun e -> infer_expression e ns) exprs in
+            let first_type = List.nth types 0 in
+            if List.length (List.filter (fun t -> t <> first_type) types) = 0
+            then first_type
+            else failwith "Types in expression list do not all have same type"
+        | Variable (locality, id) ->
+            (* Check if variable is saved in namespace, and that it's not Infer_me *)
+            match Hashtbl.find_opt ns id with
+                | Some t -> 
+                    begin match t with
+                        | Infer_me -> failwith (sprintf "Variable %s has type Infer_me at wrong place" id)
+                        | t -> t
+                    end
+                | None -> failwith (sprintf "Variable %s has no saved type in local namespace" id)
+
 
     (**
      * Infer type of statements inside function.
+     * Also creates a local variable namespace.
      *
      * @param params Input arguments to function
      * @param stmts List of all statements inside function
@@ -229,8 +252,12 @@ module InferMePass : (PASS with type return_t = program) = struct
      * @return statement list Statements with inferred types
      *)
     let infer_statements (params : param list) (stmts : statement list) (t : typ) : statement list =
+        let ns : var_namespace = Hashtbl.create 10 in
         List.map (fun s -> match s with
-            | Assignment (Infer_me, id, expr) -> Assignment (infer_expression expr, id, expr)
+            | Assignment (Infer_me, id, expr) ->
+                let new_type = infer_expression expr ns in
+                Hashtbl.add ns id new_type;
+                Assignment (new_type, id, expr)
             (*| Return of expression*)
             (* Ignore struct alloc *)
             | s -> s
@@ -501,7 +528,6 @@ let () =
     print_endline (GenerateCPass.run ast);
 
     (* Testing lexer and parser *)
-    (* TODO: Add infer pass *)
     let source = "
         struct Point = {int x; int y;}
         function main(): int {
@@ -544,10 +570,10 @@ let () =
           let open Lexing in
           raise (Internal_error (sprintf "line = %d; col = %d" linebuf.lex_curr_p.pos_lnum linebuf.lex_curr_p.pos_cnum))
     in
-    print_endline (show_program ast);
 
     AddStructToNamespacePass.run ast;
     let ast = InferMePass.run ast in
     LocalEscapePass.run ast;
     let ast = StackAllocPass.run ast in
+    print_endline (show_program ast);
     print_endline (GenerateCPass.run ast)
