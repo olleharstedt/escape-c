@@ -69,3 +69,8 @@ and expression =
 let type_of_string s = match s with
     | "int" -> Int
     | s -> Struct_typ (Unknown, s)
+
+let string_of_typ (t : typ) : string = match t with
+    | Int -> "Int"
+    | Struct_typ (_, _) -> "Struct_typ"
+    | Infer_me -> "Infer_me"

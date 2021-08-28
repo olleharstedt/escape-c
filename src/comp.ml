@@ -224,12 +224,15 @@ module InferMePass : (PASS with type return_t = program) = struct
             let t1 = infer_expression expr ns in
             let t2 = infer_expression expr2 ns in
             if t1 = t2 then t1 else failwith "Expressions in Plus do not have same type"
-        | New (_, exprs) ->
+        | New (struct_name, exprs) ->
+            Struct_typ (Local, struct_name)
+            (*
             let types = List.map (fun e -> infer_expression e ns) exprs in
             let first_type = List.nth types 0 in
             if List.length (List.filter (fun t -> t <> first_type) types) = 0
             then first_type
             else failwith "Types in expression list do not all have same type"
+            *)
         | Variable (locality, id) ->
             (* Check if variable is saved in namespace, and that it's not Infer_me *)
             match Hashtbl.find_opt ns id with
@@ -325,8 +328,8 @@ module GenerateCPass : (PASS with type return_t = string) = struct
      * @param expr
      * @return string
      *)
-    let assignment_to_c (typ : typ) (id : string) (expr : expression) : string =
-        typ_to_c typ ^ " " ^ id ^ " = " ^ expression_to_c expr ^ ";\n"
+    let assignment_to_c (typ : typ) (id : string) (expr : expression) : string = ""
+        (*typ_to_c typ ^ " " ^ id ^ " = " ^ expression_to_c expr ^ ";\n"*)
         (* TODO: Logic happens in struct_alloc *)
 
     (**
@@ -360,7 +363,8 @@ module GenerateCPass : (PASS with type return_t = string) = struct
                 | Struct_typ (Local, struct_name) ->
                     sprintf "%s __%s = {%s};\n" struct_name identifier (struct_init_to_c struct_init)
                     ^ sprintf "%s *%s = &__%s;\n" struct_name identifier identifier
-                | _ -> failwith "Invalid typ in Struct_alloc"
+                | Struct_typ (l, _) -> failwith (sprintf "Invalid typ in Struct_alloc: %s" (show_locality l))
+                | t -> failwith (sprintf "Invalid typ in Struct_alloc: %s" (show_typ t))
             end
         | Assignment (typ, id, expr) -> 
             begin match typ with
@@ -569,6 +573,7 @@ let () =
           raise (Internal_error (sprintf "line = %d; col = %d" linebuf.lex_curr_p.pos_lnum linebuf.lex_curr_p.pos_cnum))
     in
 
+    print_endline (show_program ast);
     AddStructToNamespacePass.run ast;
     let ast = InferMePass.run ast in
     LocalEscapePass.run ast;
