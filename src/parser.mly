@@ -24,6 +24,7 @@
 (*%token TIMES DIV*)
 %token COLON ":"
 %token SEMICOLON ";"
+%token COMMA ","
 %token EOF
 %token EQEQ "=="
 %token EQ "="
@@ -82,6 +83,6 @@ typ: t=NAME                     {type_of_string t}
 expr:
   | i=INT                               {Num i}
   | e=expr "+" f=expr                   {Plus (e, f)} 
-  | "new" s=NAME "{" struct_init=list(expr) "}" {New (s, struct_init)}
+  | "new" s=NAME "{" struct_init=separated_list(COMMA, expr) "}" {New (s, struct_init)}
 
 (* let p = new Point {1, 2}; *)

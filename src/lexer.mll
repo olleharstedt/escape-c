@@ -47,6 +47,7 @@ rule token = parse
   | "]"                           { RBRACK }
   | '('                           { LPAREN }
   | ')'                           { RPAREN }
+  | ','                           { COMMA }
   | "return"                      { RETURN }
   | "new"                         { NEW }
   | "let"                         { LET }

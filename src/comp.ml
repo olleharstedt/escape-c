@@ -530,7 +530,7 @@ let () =
     let source = "
         struct Point = {int x; int y;}
         function main(): int {
-            let p = 1;
+            let p = new Point{1, 2};
             return 1;
         }
     " in
@@ -557,15 +557,11 @@ let () =
     (*print_endline (match (Lexer.token linebuf) with *)
     let ast = try (Parser.program Lexer.token linebuf) with
       | Lexer.Error msg ->
-          (*
-          let tok = Lexing.lexeme linebuf in
-          *)
-          raise (Lexer_error (sprintf "%s" msg))
+          let tok : string = Lexing.lexeme linebuf in
+          raise (Lexer_error (sprintf "%s token = %s" msg tok))
       | Parser.Error ->
-          (*
           let tok = Lexing.lexeme linebuf in
-          *)
-          raise (Parser_error (sprintf "Could not parse '%s': error at %c" source (String.get source (Lexing.lexeme_start linebuf))))
+          raise (Parser_error (sprintf "tok = %s, Could not parse '%s': error at %c" tok source (String.get source (Lexing.lexeme_start linebuf))))
           (*raise (Parser_error (sprintf "Could not parse '%s'" source ))*)
       | Failure msg ->
           let open Lexing in
