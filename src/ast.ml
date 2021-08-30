@@ -66,9 +66,11 @@ and expression =
     | Function_call of ...
     *)
 
-let type_of_string s = match s with
-    | "int" -> Int
-    | s -> Struct_typ (Unknown, s)
+let type_of_string (s : string) (has_tilde : bool) = match s, has_tilde with
+    | "int", false -> Int
+    | "int", true -> failwith "Cannot use locality with int type"
+    | s, false -> Struct_typ (Nonlocal, s)
+    | s, true -> Struct_typ (Local, s)
 
 let string_of_typ (t : typ) : string = match t with
     | Int -> "Int"

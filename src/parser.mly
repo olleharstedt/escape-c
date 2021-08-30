@@ -78,7 +78,9 @@ statement:
 
 struct_field: t=typ s=NAME ";"  {(s, t)}
 
-typ: t=NAME                     {type_of_string t}
+typ:
+  | n=NAME                     {type_of_string n false }
+  | tild=TILDE n=NAME          {type_of_string n true }
 
 expr:
   | i=INT                               {Num i}

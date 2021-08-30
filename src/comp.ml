@@ -534,7 +534,7 @@ let () =
     let source = "
         struct Point = {int x; int y;}
         function main(): int {
-            let p = new Point{1, 2};
+            let p = new ~Point{1, 2};
             return 1;
         }
     " in
