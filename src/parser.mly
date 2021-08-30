@@ -83,6 +83,6 @@ typ: t=NAME                     {type_of_string t}
 expr:
   | i=INT                               {Num i}
   | e=expr "+" f=expr                   {Plus (e, f)} 
-  | "new" s=NAME "{" struct_init=separated_list(COMMA, expr) "}" {New (s, struct_init)}
+  | "new" s=typ "{" struct_init=separated_list(COMMA, expr) "}" {New (s, struct_init)}
 
 (* let p = new Point {1, 2}; *)

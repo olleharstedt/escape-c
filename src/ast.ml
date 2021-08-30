@@ -59,7 +59,7 @@ and expression =
     | Num of int
     | Plus of expression * expression
     (* TODO: "new" needs locality? *)
-    | New of struct_name * expression list
+    | New of typ * expression list
     | Variable of locality * identifier
     (*
     | Struct_access of expression * expression

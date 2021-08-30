@@ -183,7 +183,7 @@ module StackAllocPass : (PASS with type return_t = program) = struct
         | Assignment (typ, id, expr)::tail ->
             begin match expr with
                 (* TODO: Nested "new" expressions, e.g. new Rectangle{new Point{1, 2}, new Point{3, 4}} *)
-                | New (struct_name, exprs) ->
+                | New (Struct_typ (locality, struct_name), exprs) ->
                        Struct_alloc (typ, id, exprs_to_struct_init struct_name exprs)
                     :: Assignment (typ, id, expr)
                     :: insert_stack_alloc_stmts tail
@@ -224,8 +224,8 @@ module InferMePass : (PASS with type return_t = program) = struct
             let t1 = infer_expression expr ns in
             let t2 = infer_expression expr2 ns in
             if t1 = t2 then t1 else failwith "Expressions in Plus do not have same type"
-        | New (struct_name, exprs) ->
-            Struct_typ (Local, struct_name)
+        | New (struct_typ, exprs) ->
+            struct_typ
             (*
             let types = List.map (fun e -> infer_expression e ns) exprs in
             let first_type = List.nth types 0 in
@@ -317,7 +317,7 @@ module GenerateCPass : (PASS with type return_t = string) = struct
     let expression_to_c (e : expression) : string = match e with
         | Num i -> string_of_int i
         | Plus (_, _) -> failwith "Not implemented: Plus"
-        | New (struct_name, exprs) -> new_to_c struct_name exprs
+        | New (Struct_typ (loc, struct_name), exprs) -> new_to_c struct_name exprs
         | Variable (_, id) -> id
 
     (**
@@ -512,7 +512,7 @@ let () =
                         Struct_typ (Local, "Point"),
                         "p",
                         New (
-                            "Point",
+                            Struct_typ (Local, "Point"),
                             [
                                 Num 1;
                                 Num 2;
