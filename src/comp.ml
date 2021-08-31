@@ -283,6 +283,38 @@ module InferMePass : (PASS with type return_t = program) = struct
 end
 
 (**
+ * Replace all "Region None" with "Region Some <name>"
+ *)
+module InferRegionName : (PASS with type return_t = program) = struct
+    type return_t = program
+
+    (**
+     * @param params Input arguments to function
+     * @param stmts List of all statements inside function
+     * @param t Return type of function
+     * @return statement list Statements with inferred types
+     *)
+    let infer_statements (params : param list) (stmts : statement list) (t : typ) : statement list =
+        stmts
+
+    (**
+     * Run the pass
+     *
+     * @param p
+     * @return program
+     *)
+    let run (p : program) : program = match p with
+       | Declaration_list decls -> Declaration_list
+            (List.map
+                (fun decl -> match decl with
+                    | Function (name, params, stmts, t) -> Function (name, params, infer_statements params stmts t, t)
+                    | d -> d
+                )
+                decls
+            )
+end
+
+(**
  * Loop the AST and spit out C code as a string
  *)
 module GenerateCPass : (PASS with type return_t = string) = struct
@@ -296,7 +328,7 @@ module GenerateCPass : (PASS with type return_t = string) = struct
      *)
     let typ_to_c (t : typ) : string = match t with
         | Int -> "int"
-        | Struct_typ (locality, t) -> t
+        | Struct_typ (_, t) -> t
         | Infer_me -> failwith "Cannot convert Infer_me to a C type"
 
     (**
@@ -306,7 +338,10 @@ module GenerateCPass : (PASS with type return_t = string) = struct
      * @param struct_init
      * @return string
      *)
-    let new_to_c (struct_name : string) (struct_init : expression list) : string = ""
+    let new_to_c (struct_name : string) (struct_init : expression list) : string =
+        ignore(struct_name);
+        ignore(struct_init);
+        ""
 
     (**
      * Expression to C
@@ -317,7 +352,7 @@ module GenerateCPass : (PASS with type return_t = string) = struct
     let expression_to_c (e : expression) : string = match e with
         | Num i -> string_of_int i
         | Plus (_, _) -> failwith "Not implemented: Plus"
-        | New (Struct_typ (loc, struct_name), exprs) -> new_to_c struct_name exprs
+        | New (Struct_typ (_, struct_name), exprs) -> new_to_c struct_name exprs
         | Variable (_, id) -> id
 
     (**
@@ -328,7 +363,11 @@ module GenerateCPass : (PASS with type return_t = string) = struct
      * @param expr
      * @return string
      *)
-    let assignment_to_c (typ : typ) (id : string) (expr : expression) : string = ""
+    let assignment_to_c (typ : typ) (id : string) (expr : expression) : string =
+        ignore(typ);
+        ignore(id);
+        ignore(expr);
+        ""
         (*typ_to_c typ ^ " " ^ id ^ " = " ^ expression_to_c expr ^ ";\n"*)
         (* TODO: Logic happens in struct_alloc *)
 
@@ -363,6 +402,8 @@ module GenerateCPass : (PASS with type return_t = string) = struct
                 | Struct_typ (Local, struct_name) ->
                     sprintf "%s __%s = {%s};\n" struct_name identifier (struct_init_to_c struct_init)
                     ^ sprintf "%s *%s = &__%s;\n" struct_name identifier identifier
+                | Struct_typ (Regional None, _) ->
+                        failwith (sprintf "Cannot allocate to unnamed region")
                 | Struct_typ (l, _) -> failwith (sprintf "Invalid typ in Struct_alloc: %s" (show_locality l))
                 | t -> failwith (sprintf "Invalid typ in Struct_alloc: %s" (show_typ t))
             end
@@ -415,8 +456,9 @@ module GenerateCPass : (PASS with type return_t = string) = struct
      * @return string
      *)
     let function_to_c (name: string) (params : param list) (stmts : statement list) (t: typ) : string =
-        typ_to_c t ^ " " ^
         (* TODO: params *)
+        ignore(params);
+        typ_to_c t ^ " " ^
         name ^ "(" ^ ") {\n" ^
         (List.fold_left (fun carry stmt -> carry ^ statement_to_c stmt) "" stmts) ^
         "}\n"
@@ -534,7 +576,7 @@ let () =
     let source = "
         struct Point = {int x; int y;}
         function main(): int {
-            let p = new ~Point{1, 2};
+            let p = new @Point{1, 2};
             return 1;
         }
     " in
