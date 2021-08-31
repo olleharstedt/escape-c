@@ -37,6 +37,7 @@
 %token LBRACK "["
 %token RBRACK "]"
 %token TILDE "~"
+%token AT "@"
 %token RETURN "return"
 %token NEW "new"
 %token LET "let"
@@ -79,8 +80,9 @@ statement:
 struct_field: t=typ s=NAME ";"  {(s, t)}
 
 typ:
-  | n=NAME                     {type_of_string n false }
-  | tild=TILDE n=NAME          {type_of_string n true }
+  | n=NAME                      {type_of_string n Nonlocal }
+  | TILDE n=NAME                {type_of_string n Local }
+  | AT n=NAME                   {type_of_string n (Regional None)}
 
 expr:
   | i=INT                               {Num i}

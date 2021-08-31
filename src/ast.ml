@@ -12,7 +12,7 @@ type program =
  *)
 and locality =
     | Local
-    | Region of region_name
+    | Regional of region_name option (* None means region not yet inferred *)
     | Nonlocal
     | Unknown (* First pass might have un-propagated locality allocations; TODO: Use option? *)
 
@@ -66,11 +66,17 @@ and expression =
     | Function_call of ...
     *)
 
-let type_of_string (s : string) (has_tilde : bool) = match s, has_tilde with
-    | "int", false -> Int
-    | "int", true -> failwith "Cannot use locality with int type"
-    | s, false -> Struct_typ (Nonlocal, s)
-    | s, true -> Struct_typ (Local, s)
+(*
+let locality_of_string (s : string) : locality = match s with
+    | "~" -> Local
+    | "@" -> Regional
+    | _ -> Nonlocal (* Ref counted structs or primitive types like int, string, etc *)
+*)
+
+let type_of_string (s : string) (l : locality) : typ = match s, l with
+    | "int", Nonlocal -> Int
+    | "int", _ -> failwith "int type must have locality Nonlocal"
+    | s, l -> Struct_typ (l, s)
 
 let string_of_typ (t : typ) : string = match t with
     | Int -> "Int"

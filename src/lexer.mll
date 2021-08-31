@@ -57,6 +57,7 @@ rule token = parse
   | "struct"                      { STRUCT }
   | "function"                    { FUNCTION }
   | "~"                           { TILDE }
+  | "@"                           { AT }
   | "function"                    { FUNCTION }
   | "in"                          { IN }
   | identifier as id              { NAME id }
