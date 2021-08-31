@@ -289,6 +289,8 @@ module InferRegionName : (PASS with type return_t = program) = struct
     type return_t = program
 
     (**
+     * Function block
+     *
      * @param params Input arguments to function
      * @param stmts List of all statements inside function
      * @param t Return type of function
@@ -403,7 +405,7 @@ module GenerateCPass : (PASS with type return_t = string) = struct
                     sprintf "%s __%s = {%s};\n" struct_name identifier (struct_init_to_c struct_init)
                     ^ sprintf "%s *%s = &__%s;\n" struct_name identifier identifier
                 | Struct_typ (Regional None, _) ->
-                        failwith (sprintf "Cannot allocate to unnamed region")
+                        failwith (sprintf "Cannot allocate to unnamed region - region name not inferred correctly?")
                 | Struct_typ (l, _) -> failwith (sprintf "Invalid typ in Struct_alloc: %s" (show_locality l))
                 | t -> failwith (sprintf "Invalid typ in Struct_alloc: %s" (show_typ t))
             end

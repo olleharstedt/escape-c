@@ -64,6 +64,8 @@ let p = new ~Point {1, 2};
 loc p = new Point {1, 2};
 let r = new Region;
 let q = new Point {3, 4} in r;  // Region alloc, cannot escape region scope
+new region;
+let q = new @Point {3, 4};      // Can only be one region at a time
 let s = new Point {6, 7};       // GC, can escape scope
 let rect = new ~Rectangle{new ~Point{1, 2}, new ~Point{3, 4}};
 let rect = new @Rectangle{new @Point{1, 2}, new @Point{3, 4}};
