@@ -247,6 +247,7 @@ module InferMePass : (PASS with type return_t = program) = struct
     (**
      * Infer type of statements inside function.
      * Also creates a local variable namespace.
+     * TODO: Block scope?
      *
      * @param params Input arguments to function
      * @param stmts List of all statements inside function

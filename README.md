@@ -74,6 +74,17 @@ let dist = distance(new ~Point{1, 2}, new ~Point{3, 4});
 let dist = distance(new Point{1, 2} in stack, new Point{3, 4} in stack);
 let dist = distance(new Point{1, 2} in r, new Point{3, 4} in r);
 let dist = distance(new Point{1, 2}, new Point{3, 4});
+function area(shape): int with region <-- Assumes a region is created at top, and freed at bottom of function. Needed to use @-allocation.
+What if user wants a hierachy of regions?
+
+function main() with s, t
+{
+    if (rand()) {
+        // Region MUST be block scoped
+        new region r;
+    }
+    area() with r;
+}
 
 function distance(Point p1, Point p2)
 {
