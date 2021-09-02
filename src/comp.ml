@@ -418,6 +418,7 @@ module GenerateCPass : (PASS with type return_t = string) = struct
                 | Infer_me -> failwith "Missing inference of assignment type"
                 | _ -> failwith "Not implemented"
             end
+        | New_region r -> ""
 
     (**
      * Struct field to C
@@ -484,8 +485,42 @@ module GenerateCPass : (PASS with type return_t = string) = struct
      * @param p program
      * @return string
      *)
-    let run (p : program) : return_t = match p with
-       | Declaration_list decls -> List.fold_left (fun carry decl -> carry ^ declaration_to_c decl) "" decls
+    let run (p : program) : return_t = 
+		(*
+         * Include some memory pool code
+         * @see https://stackoverflow.com/questions/11749386/implement-own-memory-pool
+         *)
+        "
+typedef struct pool
+{
+  char * next;
+  char * end;
+} POOL;
+
+POOL * pool_create( size_t size ) {
+    POOL * p = (POOL*)malloc( size + sizeof(POOL) );
+    p->next = (char*)&p[1];
+    p->end = p->next + size;
+    return p;
+}
+
+void pool_destroy( POOL *p ) {
+    free(p);
+}
+
+size_t pool_available( POOL *p ) {
+    return p->end - p->next;
+}
+
+void * pool_alloc( POOL *p, size_t size ) {
+    if( pool_available(p) < size ) return NULL;
+    void *mem = (void*)p->next;
+    p->next += size;
+    return mem;
+}
+        " ^
+        match p with
+            | Declaration_list decls -> List.fold_left (fun carry decl -> carry ^ declaration_to_c decl) "" decls
 end
 
 let string_of_token (token : Parser.token) : string =
@@ -497,7 +532,7 @@ let string_of_token (token : Parser.token) : string =
         | SEMICOLON -> "SEMICOLON"
         | RPAREN -> "RPAREN"
         | RETURN -> "RETURN"
-        | REG -> "REG"
+        | REGION -> "REGION"
         | RBRACK -> "RBRACE"
         | RBRACE -> "RBRACE"
         | PLUS -> "PLUS"
@@ -579,7 +614,8 @@ let () =
     let source = "
         struct Point = {int x; int y;}
         function main(): int {
-            let p = new @Point{1, 2};
+            new region r;
+            let p = new @Point{1, 2} in r;
             return 1;
         }
     " in

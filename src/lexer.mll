@@ -52,7 +52,7 @@ rule token = parse
   | "new"                         { NEW }
   | "let"                         { LET }
   | "local"                       { LOCAL }
-  | "reg"                         { REG }
+  | "region"                      { REGION }
   | "with"                        { WITH }
   | "struct"                      { STRUCT }
   | "function"                    { FUNCTION }

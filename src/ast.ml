@@ -49,6 +49,7 @@ and statement =
     | Assignment of typ * identifier * expression
     (* return ...; *)
     | Return of expression
+    | New_region of region_name
     (* Function_call that returns void *)
     (* If-statement, or only if-expression *)
     (* While-loop *)
@@ -82,3 +83,7 @@ let string_of_typ (t : typ) : string = match t with
     | Int -> "Int"
     | Struct_typ (_, _) -> "Struct_typ"
     | Infer_me -> "Infer_me"
+
+let add_region_to_typ (t : typ) (region_name : region_name) = match t with
+    | Struct_typ (Regional None, i) -> Struct_typ (Regional (Some region_name), i)
+    | _ -> failwith "Can only add region to Region None struct typ"
