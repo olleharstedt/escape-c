@@ -177,17 +177,22 @@ module StackAllocPass : (PASS with type return_t = program) = struct
     (**
      * @param stmts
      * @return statement list
+     * @TODO Can also be used for pool alloc?
      *)
     let rec insert_stack_alloc_stmts (stmts : statement list) : statement list = match stmts with
         | [] -> []
         | Assignment (typ, id, expr)::tail ->
             begin match expr with
                 (* TODO: Nested "new" expressions, e.g. new Rectangle{new Point{1, 2}, new Point{3, 4}} *)
-                | New (Struct_typ (locality, struct_name), exprs) ->
+                | New (Struct_typ (Local, struct_name), exprs) ->
                        Struct_alloc (typ, id, exprs_to_struct_init struct_name exprs)
                     :: Assignment (typ, id, expr)
                     :: insert_stack_alloc_stmts tail
                 (* For all other expressions, don't change anything *)
+                | New (Struct_typ (Regional (Some r), struct_name), exprs) ->
+                        Struct_pool_alloc (r, typ, id, exprs_to_struct_init struct_name exprs)
+                    :: Assignment (typ, id, expr)
+                    :: insert_stack_alloc_stmts tail
                 | _ -> Assignment (typ, id, expr)::tail
             end
         | s::tail ->
@@ -357,6 +362,7 @@ module GenerateCPass : (PASS with type return_t = string) = struct
         | Plus (_, _) -> failwith "Not implemented: Plus"
         | New (Struct_typ (_, struct_name), exprs) -> new_to_c struct_name exprs
         | Variable (_, id) -> id
+        | _ -> failwith "Not implemented: expression_to_c"
 
     (**
      * Assignment to C
@@ -407,18 +413,21 @@ module GenerateCPass : (PASS with type return_t = string) = struct
                     ^ sprintf "%s *%s = &__%s;\n" struct_name identifier identifier
                 | Struct_typ (Regional None, _) ->
                         failwith (sprintf "Cannot allocate to unnamed region - region name not inferred correctly?")
-                | Struct_typ (l, _) -> failwith (sprintf "Invalid typ in Struct_alloc: %s" (show_locality l))
+                | Struct_typ (l, _) -> failwith (sprintf "Invalid Struct_typ in Struct_alloc: %s" (show_locality l))
                 | t -> failwith (sprintf "Invalid typ in Struct_alloc: %s" (show_typ t))
             end
+        | Struct_pool_alloc (region_name, typ, id, struct_init) ->
+                failwith "here"
         | Assignment (typ, id, expr) -> 
             begin match typ with
                 | Struct_typ (Local, _) ->
                     assignment_to_c typ id expr
                 | Int -> assignment_to_c typ id expr
                 | Infer_me -> failwith "Missing inference of assignment type"
-                | _ -> failwith "Not implemented"
+                | _ -> failwith "Not implemented: Assignment, statement_to_c"
             end
-        | New_region r -> ""
+        | New_region r -> "POOL " ^ r ^ " = pool_create(100);"
+        | _ -> failwith "Not implemented: statement_to_c"
 
     (**
      * Struct field to C

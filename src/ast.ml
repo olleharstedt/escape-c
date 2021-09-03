@@ -45,6 +45,8 @@ and region_name = string
 and statement =
     (* Struct_alloc is an internal statement used by C pass *)
     | Struct_alloc of typ * identifier * struct_init
+    (* Internal statement used by region pass *)
+    | Struct_pool_alloc of region_name * typ * identifier * struct_init
     (* let a = ...; *)
     | Assignment of typ * identifier * expression
     (* return ...; *)
