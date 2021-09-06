@@ -557,7 +557,7 @@ void * pool_alloc( POOL *p, size_t size ) {
     p->next += size;
     return mem;
 }
-        " ^
+" ^
         match p with
             | Declaration_list decls -> List.fold_left (fun carry decl -> carry ^ declaration_to_c decl) "" decls
 end
