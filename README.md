@@ -82,6 +82,8 @@ function main() with s, t
     if (rand()) {
         // Region MUST be block scoped
         new region r;
+        new pool p;
+        new buffer b(1000);
         let p = new @Point{1, 2};
         let p = new @Point{1, 2} in r;  // Can infer r if only one region is active?
     }

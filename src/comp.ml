@@ -416,18 +416,44 @@ module GenerateCPass : (PASS with type return_t = string) = struct
                 | Struct_typ (l, _) -> failwith (sprintf "Invalid Struct_typ in Struct_alloc: %s" (show_locality l))
                 | t -> failwith (sprintf "Invalid typ in Struct_alloc: %s" (show_typ t))
             end
-        | Struct_pool_alloc (region_name, typ, id, struct_init) ->
-                failwith "here"
+        | Struct_pool_alloc (region_name, Struct_typ (_, struct_name), id, struct_init) ->
+                sprintf "
+if (pool_available(%s) < sizeof(%s)) {
+    exit(127);
+}
+%s* %s = pool_alloc(%s, sizeof(%s));
+"
+                region_name
+                struct_name
+                struct_name
+                id
+                region_name
+                struct_name
         | Assignment (typ, id, expr) -> 
             begin match typ with
                 | Struct_typ (Local, _) ->
                     assignment_to_c typ id expr
                 | Int -> assignment_to_c typ id expr
                 | Infer_me -> failwith "Missing inference of assignment type"
-                | _ -> failwith "Not implemented: Assignment, statement_to_c"
+                | _ -> "" (*failwith "Not implemented: Assignment, statement_to_c"*)
             end
-        | New_region r -> "POOL " ^ r ^ " = pool_create(100);"
+        | New_region r ->
+            (** TODO: Pool size *)
+            "POOL* " ^ r ^ " = pool_create(100);"
         | _ -> failwith "Not implemented: statement_to_c"
+
+    (** 
+     * Call at the end of a scope/block to generate free() statements
+     *
+     * @param s
+     * @return s
+     * @TODO: Maybe do this in the AST before? Free_region AST node
+     *)
+    let finish_block_to_c  (s : statement) : string = match s with
+        | New_region r -> "pool_destroy(" ^ r ^ ");\n"
+        (** Ignore all other statements *)
+        | _ -> ""
+
 
     (**
      * Struct field to C
@@ -473,8 +499,9 @@ module GenerateCPass : (PASS with type return_t = string) = struct
         ignore(params);
         typ_to_c t ^ " " ^
         name ^ "(" ^ ") {\n" ^
-        (List.fold_left (fun carry stmt -> carry ^ statement_to_c stmt) "" stmts) ^
-        "}\n"
+        (** TODO: Factor out scope_to_c or block_to_c *)
+        (List.fold_left (fun carry stmt -> carry ^ statement_to_c stmt) "" stmts)
+        ^ (List.fold_left (fun carry stmt -> carry ^ finish_block_to_c stmt) "" stmts) ^ "}\n"
 
     (**
      * Declaration to C
@@ -500,6 +527,9 @@ module GenerateCPass : (PASS with type return_t = string) = struct
          * @see https://stackoverflow.com/questions/11749386/implement-own-memory-pool
          *)
         "
+#include <stdio.h>
+#include <stdlib.h>
+
 typedef struct pool
 {
   char * next;
