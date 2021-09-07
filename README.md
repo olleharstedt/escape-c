@@ -86,6 +86,8 @@ function main() with s, t
         new buffer b(1000);
         let p = new @Point{1, 2};
         let p = new @Point{1, 2} in r;  // Can infer r if only one region is active?
+        FREEREGIONS(r, p, b);
+        return 1;
     }
     area() with r;
 }
