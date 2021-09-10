@@ -493,8 +493,10 @@ if (pool_available(%s) < sizeof(%s)) {
         name ^ "(" ^ ") {\n" ^
         (** TODO: Factor out scope_to_c or block_to_c *)
         (** TODO: Region scope for if and loops? *)
-        (List.fold_left (fun carry stmt -> carry ^ statement_to_c stmt local_regions) "" stmts)
-        ^ "}\n"
+        let stmts_c = List.fold_left (fun carry stmt -> carry ^ statement_to_c stmt local_regions) "" stmts in
+        (* In case no return statement was written, destroy all pools before implicit return *)
+        let last_destroy = Hashtbl.fold (fun k v acc -> (sprintf "pool_destroy(%s);\n" k) ^ acc) local_regions "" in
+        stmts_c ^ last_destroy ^ "}\n"
 
     (**
      * Declaration to C
