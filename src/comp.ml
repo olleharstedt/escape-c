@@ -88,6 +88,7 @@ Declaration_list [
 
 let global_struct_namespace : (string, struct_field list) Hashtbl.t = Hashtbl.create 10
 type var_namespace = (string, typ) Hashtbl.t
+type local_regions = (string, unit) Hashtbl.t
 
 module type PASS = sig
     type return_t
@@ -404,8 +405,10 @@ module GenerateCPass : (PASS with type return_t = string) = struct
      * @param s
      * @return string
      *)
-    let statement_to_c (s : statement) : string = match s with
-        | Return ex -> "return " ^ expression_to_c ex ^ ";\n"
+    let statement_to_c (s : statement) (regs : local_regions) : string = match s with
+        | Return ex -> 
+                Hashtbl.fold (fun k v acc -> (sprintf "pool_destroy(%s);\n" k) ^ acc) regs "" ^
+                "return " ^ expression_to_c ex ^ ";\n"
         | Struct_alloc (typ, identifier, struct_init) ->
             begin match typ with
                 | Struct_typ (Local, struct_name) ->
@@ -439,21 +442,9 @@ if (pool_available(%s) < sizeof(%s)) {
             end
         | New_region r ->
             (** TODO: Pool size *)
+            Hashtbl.add regs r ();
             "POOL* " ^ r ^ " = pool_create(100);"
         | _ -> failwith "Not implemented: statement_to_c"
-
-    (** 
-     * Call at the end of a scope/block to generate free() statements
-     *
-     * @param s
-     * @return s
-     * @TODO: Maybe do this in the AST before? Free_region AST node
-     *)
-    let finish_block_to_c  (s : statement) : string = match s with
-        | New_region r -> "pool_destroy(" ^ r ^ ");\n"
-        (** Ignore all other statements *)
-        | _ -> ""
-
 
     (**
      * Struct field to C
@@ -497,11 +488,13 @@ if (pool_available(%s) < sizeof(%s)) {
     let function_to_c (name: string) (params : param list) (stmts : statement list) (t: typ) : string =
         (* TODO: params *)
         ignore(params);
+        let local_regions : local_regions = Hashtbl.create 10 in
         typ_to_c t ^ " " ^
         name ^ "(" ^ ") {\n" ^
         (** TODO: Factor out scope_to_c or block_to_c *)
-        (List.fold_left (fun carry stmt -> carry ^ statement_to_c stmt) "" stmts)
-        ^ (List.fold_left (fun carry stmt -> carry ^ finish_block_to_c stmt) "" stmts) ^ "}\n"
+        (** TODO: Region scope for if and loops? *)
+        (List.fold_left (fun carry stmt -> carry ^ statement_to_c stmt local_regions) "" stmts)
+        ^ "}\n"
 
     (**
      * Declaration to C
@@ -529,6 +522,7 @@ if (pool_available(%s) < sizeof(%s)) {
         "
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 typedef struct pool
 {
@@ -545,6 +539,18 @@ POOL * pool_create( size_t size ) {
 
 void pool_destroy( POOL *p ) {
     free(p);
+}
+
+// TODO: Not needed probably
+void pool_destroy_many(int arg_count, ...) {
+    va_list ap;
+    va_start(ap, arg_count);
+    for (int i = 2; i <= arg_count; i++) {
+        POOL* p;
+        p = va_arg(ap, POOL*);
+        pool_destroy(p);
+    }
+    va_end(ap);
 }
 
 size_t pool_available( POOL *p ) {

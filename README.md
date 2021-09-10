@@ -77,6 +77,11 @@ let dist = distance(new Point{1, 2}, new Point{3, 4});
 function area(shape): int with region <-- Assumes a region is created at top, and freed at bottom of function. Needed to use @-allocation.
 What if user wants a hierachy of regions?
 
+Array types.
+let a = [1, 2, 3];        // Ref counted linked list
+let b = ~[1, 2, 3];       // Stack-allocated fixed-size array
+let c = @[1, 2, 3] in r;  // Dynamically sized array inside memory pool
+
 function main() with s, t
 {
     if (rand()) {
@@ -84,6 +89,7 @@ function main() with s, t
         new region r;
         new pool p;
         new buffer b(1000);
+        new freelist fl(10);
         let p = new @Point{1, 2};
         let p = new @Point{1, 2} in r;  // Can infer r if only one region is active?
         FREEREGIONS(r, p, b);
