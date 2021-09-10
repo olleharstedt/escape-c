@@ -82,6 +82,8 @@ let a = [1, 2, 3];        // Ref counted linked list
 let b = ~[1, 2, 3];       // Stack-allocated fixed-size array
 let c = @[1, 2, 3] in r;  // Dynamically sized array inside memory pool
 
+Free list, available memory blocks per struct?
+
 function main() with s, t
 {
     if (rand()) {

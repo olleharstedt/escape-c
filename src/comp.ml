@@ -663,7 +663,6 @@ let () =
         function main(): int {
             new region r;
             let p = new @Point{1, 2} in r;
-            return 1;
         }
     " in
     (* NAME int NAME main LPAREN RPAREN LBRACE RETURN INT0 SEMICOLON RBRACE *)
