@@ -1,0 +1,10 @@
+== TEST CASES FOR DEVELOPMENT ==
+
+TODO: Automate? And run compiled code? And check with valgrind?
+Run valgrind with -q to only show errors.
+
+struct Point = {int x; int y;}
+function main(): int {
+    new region r;
+    let p = new @Point{1, 2} in r;
+}
