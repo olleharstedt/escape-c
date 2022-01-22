@@ -11,3 +11,7 @@
 (env
   (dev
     (flags (:standard -warn-error -A))))
+
+(rule
+    (alias runtest)
+    (action (run ./test.exe)))
